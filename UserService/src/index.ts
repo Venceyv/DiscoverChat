@@ -2,24 +2,31 @@ import express from 'express';
 import dotenv from 'dotenv';
 import http from 'http';
 import mongoInit from './config/mongoose';
+import vars from './config/vars';
 
 dotenv.config();
 const app = express();
 
-const port = process.env.PORT || 3001;
-
 let server: http.Server;
 
-mongoInit().then(() => {
-  serverInit()
-    .then((serv) => {
-      server = serv;
-      console.log('Server running...');
-    })
-    .catch(() => {
-      exitHandler();
-    });
-});
+// mongoInit().then(() => {
+//   serverInit()
+//     .then((serv) => {
+//       server = serv;
+//       console.log('Server running...');
+//     })
+//     .catch(() => {
+//       exitHandler();
+//     });
+// });
+
+serverInit()
+  .then(() => {
+    console.log('Server running...');
+  })
+  .catch(() => {
+    exitHandler();
+  });
 
 process.on('uncaughtException', unexpectedErrorHandler);
 process.on('unhandledRejection', unexpectedErrorHandler);
@@ -29,14 +36,15 @@ process.on('SIGTERM', () => {
   if (server) {
     server.close();
   }
+  process.exit(1);
 });
 
-function serverInit(): Promise<http.Server> {
-  return new Promise((resolve) => {
-    const server = app.listen(port, () => {
-      console.log(`Listening on port: ${port}`);
+function serverInit(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server = app.listen(vars.serverPort, () => {
+      console.log(`Listening on port: ${vars.serverPort}`);
     });
-    resolve(server);
+    server ? resolve() : reject();
   });
 }
 

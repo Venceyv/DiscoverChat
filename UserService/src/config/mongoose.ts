@@ -1,19 +1,19 @@
 import mongoose from 'mongoose';
-
-const MONGODB_URL = process.env.MONGODB_URL || '';
+import vars from './vars';
 
 function mongoInit(): Promise<void> {
   return new Promise((resolve, reject) =>
     mongoose
-      .connect(MONGODB_URL)
+      .connect(vars.mongoUrl)
       .then(() => {
+        // todo logger
         console.log('MongoDB connection established.');
         resolve();
       })
       .catch((err) => {
-        console.log(`MongoDB connection error: ${err}`);
+        // todo logger
+        console.log(`MongoDB connection error: \n${err}`);
         reject();
-        process.exit();
       })
   );
 }
