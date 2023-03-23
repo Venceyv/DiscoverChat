@@ -1,7 +1,7 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
-    "module": "es6", // esnext or es6
+    "module": "esnext", // esnext or es6
     "noImplicitAny": true,
     "resolveJsonModule": true
   },
