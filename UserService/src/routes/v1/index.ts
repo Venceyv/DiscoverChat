@@ -1,15 +1,10 @@
 import { Router } from 'express';
-import healthCheckRoute from './healthCheck.route';
 import userRoute from './user.route';
 
 const router = Router();
 
 // Modolab FE
 const defaultRoutes = [
-  {
-    path: '/health',
-    route: healthCheckRoute,
-  },
   {
     path: '/user',
     route: userRoute,

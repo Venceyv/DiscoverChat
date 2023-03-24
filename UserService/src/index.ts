@@ -1,10 +1,10 @@
 import app from './app';
 import dotenv from 'dotenv';
 import http from 'http';
-import mongoInit from './config/mongoose';
-import vars from './config/vars';
+import mongoInit from './config/mongoose.config';
+import vars from './config/vars.config';
 import mongoose from 'mongoose';
-import logger from './config/logger';
+import logger from './config/logger.config';
 
 dotenv.config();
 

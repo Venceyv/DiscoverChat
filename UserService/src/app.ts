@@ -4,7 +4,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import modoRoutes from './routes/v1';
 import nextRoutes from './routes/v2';
-// import errorHandler from './middleware/error';
+import errorHandler from './middleware/error.middleware';
+import healthCheckRoute from './routes/healthCheck.route';
 
 const app = express();
 
@@ -32,11 +33,11 @@ app.use(compression());
 // passport.use('jwt', jwt);
 // passport.use('headerapikey',jwtHeaderAuth);
 
-// Modolab api routes
-app.use('/v1', modoRoutes);
-// Next routes
-app.use('/v2', nextRoutes);
+app.use('/health', healthCheckRoute);
 
-// app.use(errorHandler);
+// ver1 routes
+app.use('/v1', modoRoutes);
+
+app.use(errorHandler);
 
 export default app;

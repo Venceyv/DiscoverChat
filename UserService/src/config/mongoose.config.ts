@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import vars from './vars';
+import vars from './vars.config';
 
 function mongoInit(): Promise<void> {
   return new Promise((resolve, reject) =>

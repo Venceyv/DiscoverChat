@@ -9,6 +9,11 @@
     "esm": true,
     "experimentalSpecifierResolution": "node"
   },
-  "include": ["**/*.ts"],
+  "include": [
+    "**/*.*.ts",
+    "src/config/vars.config.ts",
+    "src/middleware/error.middleware.ts",
+    "src/model/user.ts"
+  ],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
