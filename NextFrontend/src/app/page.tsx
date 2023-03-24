@@ -1,12 +1,20 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from './page.module.css'
+import Image from 'next/image';
+import { Inter } from 'next/font/google';
+import styles from './page.module.css';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
+
+const fetchData = () => {
+  return fetch('https://jsonplaceholder.typicode.com/posts/1').then((res) => {
+    console.log(res);
+    return res.json();
+  });
+};
 
 export default function Home() {
   return (
     <main className={styles.main}>
+      <div></div>
       <div className={styles.description}>
         <p>
           Get started by editing&nbsp;
@@ -87,5 +95,5 @@ export default function Home() {
         </a>
       </div>
     </main>
-  )
+  );
 }
