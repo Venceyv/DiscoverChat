@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
-    _id: mongoose.SchemaTypes.ObjectId,
     email: {
       type: String,
       required: true,
@@ -49,4 +48,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-export default userSchema;
+const User = mongoose.model('User', userSchema);
+
+export default User;
