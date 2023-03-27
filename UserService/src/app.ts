@@ -2,10 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import modoRoutes from './routes/v1';
-import nextRoutes from './routes/v2';
-import errorHandler from './middleware/error.middleware';
-import healthCheckRoute from './routes/healthCheck.route';
+import modoRoutes from './route/v1';
+import authRoute from './route/auth.route';
+import nextRoutes from './route/v2';
+import errorHandler, { APIError } from './middleware/error.middleware';
+import healthCheckRoute from './route/healthCheck.route';
 
 const app = express();
 
@@ -27,16 +28,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 
 // jwt authentication
-
 // app.use(passport.initialize());
 // app.use(fileUpload());
 // passport.use('jwt', jwt);
 // passport.use('headerapikey',jwtHeaderAuth);
 
-app.use('/health', healthCheckRoute);
-
-// ver1 routes
 app.use('/v1', modoRoutes);
+app.use('/auth', authRoute);
+
+app.use('/health', healthCheckRoute);
+app.use('/test', async (req, res, next) => {
+  next(new Error('Testing'));
+});
+
+// catch-all undefined routes
+app.use((req, res, next) => {
+  next(new APIError(404, 'Invalid resouce path.'));
+});
 
 app.use(errorHandler);
 
