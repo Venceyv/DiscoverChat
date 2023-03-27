@@ -1,18 +1,17 @@
 import mongoose from 'mongoose';
-import vars from './vars';
+import logger from './logger.config';
+import vars from './vars.config';
 
 function mongoInit(): Promise<void> {
   return new Promise((resolve, reject) =>
     mongoose
       .connect(vars.mongoUrl)
       .then(() => {
-        // todo logger
-        console.log('MongoDB connection established.');
+        logger.info('MongoDB connection established.');
         resolve();
       })
       .catch((err) => {
-        // todo logger
-        console.log(`MongoDB connection error: \n${err}`);
+        logger.error(`MongoDB connection error: \n${err}`);
         reject();
       })
   );

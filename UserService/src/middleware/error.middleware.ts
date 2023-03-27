@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
-import logger from '../config/logger';
+import { NextFunction, Request, Response } from 'express';
+import { ZodError } from 'zod';
+import logger from '../config/logger.config';
 
 export class APIError extends Error {
   statusCode: number;
@@ -12,7 +13,7 @@ export class APIError extends Error {
   }
 }
 
-const errorHandler = (err: unknown, req: Request, res: Response) => {
+const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
   logger.error(err);
 
   // Custom api error
@@ -27,7 +28,12 @@ const errorHandler = (err: unknown, req: Request, res: Response) => {
     return;
   }
 
-  res.status(500).send({ error: 'Internal Server Error' });
+  if (err instanceof ZodError) {
+    res.status(400).json(err.issues);
+    return;
+  }
+
+  res.status(500).send({ error: 'Internal Server Error.' });
 };
 
 export default errorHandler;
