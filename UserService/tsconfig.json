@@ -13,7 +13,8 @@
     "**/*.*.ts",
     "src/config/vars.config.ts",
     "src/middleware/error.middleware.ts",
-    "src/model/user.ts"
+    "src/model/user.ts",
+    "src/service/emailTemplates"
   ],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
