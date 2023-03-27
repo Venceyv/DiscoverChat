@@ -8,7 +8,7 @@ const zodGenders = z.custom((val) => {
 
 const userSchema = z
   .object({
-    email: z.string().email(),
+    email: z.string().email({ message: 'Invalid email' }),
     firstName: z.string().min(1).optional(),
     lastName: z.string().min(1).optional(),
     birthday: z.date().nullish().optional(),
