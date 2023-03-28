@@ -20,4 +20,10 @@ export default {
     key: process.env.SECRET_KEY || '',
   },
   domain: process.env.DOMAIN_URL || '',
+  redis: {
+    port: parseInt(process.env.REDIS_PORT || ''),
+    host: process.env.REDIS_HOST || '',
+    username: process.env.REDIS_USERNAME || '',
+    password: process.env.REDIS_PASSWORD || '',
+  },
 };
