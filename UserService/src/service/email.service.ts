@@ -12,7 +12,7 @@ function authEmail(
 ): Promise<string | void> {
   const mailOptions = {
     from: vars.nodeMailer.email,
-    to: 'steammingliu1@gmail.com',
+    to: userEmail,
     subject: `DiscoverChat ${type === 'register' ? 'Signup' : 'Login'}`,
     html:
       type === 'register'
