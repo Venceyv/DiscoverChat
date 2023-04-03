@@ -5,6 +5,7 @@ import { APIError } from './error.middleware';
 // check for jwt in cookies
 async function JWTAuth(req: Request, res: Response, next: NextFunction) {
   try {
+    // change to auth header
     const token = req.cookies.DC_token;
     await jwtService.verifyToken(token);
 

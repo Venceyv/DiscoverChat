@@ -4,19 +4,41 @@ import multerFileProcess from '../../middleware/fileProcess.middleware';
 import { APIError } from '../../middleware/error.middleware';
 import User from '../../model/user.model';
 import { userSchema } from '../../validator/user.validator';
+import jwtService from '../../service/jwt.service';
+import { JwtPayload } from 'jsonwebtoken';
 const router = express.Router();
 
+type DataType = 'jsonData' | 'modoJson';
+
+// @params type: modoJson || jsonData
+// @Return Construct Modo || data
 router.route('/').post(async (req, res, next) => {
   try {
-    //validate req body
+    // type: modoJson || jsonData
+    const requestType: DataType = req.params.dataType!;
+    if (!requestType) {
+      throw new APIError(400, 'Missing param type.');
+    }
+
+    const verifiedToken: JwtPayload = (await jwtService.verifyToken(
+      req.cookies.DC_token
+    )) as JwtPayload;
+
+    const user = User.find({ _id: { $not: verifiedToken.id } }).exec();
+
+    if (requestType === 'jsonData') {
+      res.status(200).send();
+    }
+
     const requestUser = userSchema.parse(req.body);
-    const user = await User.create(requestUser);
-    res.status(201).json({ message: 'User created successfully.', data: user });
+    // const user = await User.create(requestUser);
+    // res.status(201).json({ message: 'User created successfully.', data: user });
   } catch (error) {
     next(error);
   }
 });
 
+// not change profile route, testing gservice upload
 router
   .route('/profile')
   .post(multerFileProcess.fileProcess.single('discoverChatAsset'), async (req, res, next) => {
@@ -33,14 +55,31 @@ router
     }
   });
 
-router.route('/:userId').get(async (req, res) => {
-  //check auth if is user <-> token      <- middleware
-  // if true
-  // -> get self
-  // if false
-  // -> get userId
+// IMPORTANT: PASS JWT TO DIFF SERVICES VIA AUTH HEADER
+// AUTH GENERATION HAPPENS IN GATEWAY // maybe
+// SERVICES GET TOKEN VIA AUTH HEADER BY API GATEWAY
+// GEN Short TTL TOKEN INTER SERVICE COMM
+// POSTMAN API DOC
+// RETURN AT TO GATEWAY, SET COOKIE IN GATEWAY W/ AT VIA COOKIES
 
-  res.send('Hi user 🤪');
+// get user profile
+router.route('/:userId').get(async (req, res, next) => {
+  try {
+    const token = req.cookies.DC_token;
+    const verifiedToken: JwtPayload = (await jwtService.verifyToken(token)) as JwtPayload;
+
+    const user = await User.findById(verifiedToken.id);
+
+    if (verifiedToken.id == req.params.userId) {
+      // send user profile modo json
+      return;
+    }
+
+    // send not self modo json
+    return;
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

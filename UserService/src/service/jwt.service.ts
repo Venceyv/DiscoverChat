@@ -15,7 +15,7 @@ function generateToken(userInfo: object) {
   });
 }
 
-//TODO
+//TODO change expiresin time
 function generateRefreshToken(userInfo: object) {
   return new Promise((resolve, reject) => {
     jwt.sign(userInfo, vars.jwt.key, { expiresIn: 24 * 60 * 60 }, (err, token) => {
