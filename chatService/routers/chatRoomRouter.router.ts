@@ -1,0 +1,20 @@
+/*
+ * @Author: 2FLing 349332929yaofu@gmail.com
+ * @Date: 2023-02-27 17:09:30
+ * @LastEditors: 2FLing 349332929yaofu@gmail.com
+ * @LastEditTime: 2023-04-06 17:51:13
+ * @FilePath: \discoverChat\routers\chat.js
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
+import {Router} from "express";
+import { deleteRoom, editRoomMessage, getRoomMessage, newRoom, recallRoomMessage, sentToRoom } from "../controllers/chatRoom.controller";
+import { checkAuth, checkIfFriends, checkIfInTheRoom, checkRoomExist } from "../middlewares/room.middleware";
+const chatRoomRouter = Router();
+
+chatRoomRouter.get('/:roomId',checkIfInTheRoom,getRoomMessage);
+chatRoomRouter.post('/newRoom/:userId',checkIfFriends,newRoom);
+chatRoomRouter.post('/newMessage/:roomId',checkRoomExist,checkIfInTheRoom,sentToRoom);
+chatRoomRouter.put('/:roomId/:messageId',checkRoomExist,checkAuth,editRoomMessage);
+chatRoomRouter.delete('/:roomId',checkRoomExist,checkIfInTheRoom,deleteRoom);
+chatRoomRouter.delete('/:roomId/:messageId',checkRoomExist,checkAuth,recallRoomMessage);
+export {chatRoomRouter}
