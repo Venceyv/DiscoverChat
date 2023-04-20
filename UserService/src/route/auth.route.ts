@@ -74,6 +74,7 @@ router.route('/confirm').get(async (req, res, next) => {
       .cookie('DC_token', accessToken, {
         httpOnly: true,
         secure: vars.nodeEnvironment === 'production',
+        // domain
       })
       .status(200)
       .json({ message: 'Successful verified.' });
