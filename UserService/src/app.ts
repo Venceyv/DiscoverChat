@@ -7,6 +7,7 @@ import authRoute from './route/auth.route';
 import nextRoutes from './route/v2';
 import errorHandler, { APIError } from './middleware/error.middleware';
 import healthCheckRoute from './route/healthCheck.route';
+import { createConsumer, createProducer } from './service/rabbitmq.service';
 
 const app = express();
 
