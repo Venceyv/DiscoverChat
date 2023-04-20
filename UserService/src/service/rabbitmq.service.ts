@@ -46,7 +46,10 @@ const opt = {
 };
 export const connection = amqp.connect(rabbitConn, { connectionOptions: opt });
 
-export const createProducer = async (queuekey: string, msg: any) => {
+export const createProducer = async (
+  queuekey: string,
+  msg: UserResponseType | null | undefined
+) => {
   try {
     const channelWrapper = connection.createChannel({
       json: true,
@@ -97,9 +100,9 @@ export const createConsumer = async (queuekey: string, callBack: any) => {
 
 // get user RMQ
 export async function getUserRMQ(
-  requestObject: UserResourceRequestType
+  requestObject: UserResourceRequestType | string
 ): Promise<UserResponseType | null | undefined> {
-  const { resource, type, userId, others } = requestObject;
+  const { resource, type, userId, others } = JSON.parse(requestObject as string); // see if need to stringify
   const responseObject: UserResponseType = {
     resource: resource,
     userId: userId,

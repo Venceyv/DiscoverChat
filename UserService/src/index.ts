@@ -5,7 +5,7 @@ import mongoInit from './config/mongoose.config';
 import vars from './config/vars.config';
 import mongoose from 'mongoose';
 import logger from './config/logger.config';
-import { createConsumer, connection, createProducer } from './service/rabbitmq.service';
+import { createConsumer, connection, createProducer, getUserRMQ } from './service/rabbitmq.service';
 
 dotenv.config();
 
@@ -21,11 +21,12 @@ mongoInit().then(() => {
     });
 });
 
+// IMPORTANT: CONSUMER & REDUCER
 setInterval(async () => {
   console.log('listening');
   await createConsumer('1291oiewiolkd9283.discover', async (msg: any, channelWrapper: any) => {
-    console.log('1111');
-    await createProducer('209i13q0iewodjwqaikmd.user', 'did u get this');
+    const data = await getUserRMQ(msg);
+    await createProducer('209i13q0iewodjwqaikmd.user', data);
   });
 }, 4000);
 
