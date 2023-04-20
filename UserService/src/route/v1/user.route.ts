@@ -12,13 +12,17 @@ type DataType = 'jsonData' | 'modoJson';
 
 // @params type: modoJson || jsonData
 // @Return Construct Modo || data
+router.route('/').get(async (req, res) => {
+  res.send();
+});
+
 router.route('/').post(async (req, res, next) => {
   try {
     // type: modoJson || jsonData
-    const requestType: DataType = req.params.dataType!;
-    if (!requestType) {
-      throw new APIError(400, 'Missing param type.');
-    }
+    // const requestType: DataType = req.params.dataType;
+    // if (!requestType) {
+    //   throw new APIError(400, 'Missing param type.');
+    // }
 
     const verifiedToken: JwtPayload = (await jwtService.verifyToken(
       req.cookies.DC_token
@@ -26,9 +30,9 @@ router.route('/').post(async (req, res, next) => {
 
     const user = User.find({ _id: { $not: verifiedToken.id } }).exec();
 
-    if (requestType === 'jsonData') {
-      res.status(200).send();
-    }
+    // if (requestType === 'jsonData') {
+    //   res.status(200).send();
+    // }
 
     const requestUser = userSchema.parse(req.body);
     // const user = await User.create(requestUser);
@@ -37,6 +41,9 @@ router.route('/').post(async (req, res, next) => {
     next(error);
   }
 });
+
+// userArr[0] = jwt.user determine, if userArr[0] - fill by major, then random user
+//
 
 // not change profile route, testing gservice upload
 router
@@ -71,7 +78,6 @@ router.route('/:userId').get(async (req, res, next) => {
     const user = await User.findById(verifiedToken.id);
 
     if (verifiedToken.id == req.params.userId) {
-      // send user profile modo json
       return;
     }
 
