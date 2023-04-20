@@ -93,7 +93,7 @@ router.route('/register').get(async (req, res, next) => {
       next(new APIError(400, 'Email already exists.'));
       return;
     }
-
+    
     const userOptions: RegisterUserOptions = { email: userEmail, type: 'register' };
     const token = await jwtService.generateToken(userOptions);
     const magicLink = `${vars.domain}/auth/confirm?email=${userEmail}&token=${token}&type=register`;
