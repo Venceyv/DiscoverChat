@@ -61,7 +61,7 @@ router.route('/:userId').get(async (req, res, next) => {
     const user = await User.findById(verifiedToken.id);
 
     if (!user) {
-      res.send(userProfileNotFound());
+      res.json(userProfileNotFound());
       return;
     }
 
@@ -76,21 +76,15 @@ router.route('/:userId').get(async (req, res, next) => {
     };
 
     if (verifiedToken.id == req.params.userId) {
-      res.send(userProfileSelf(data));
+      res.json(userProfileSelf(data));
       return;
     }
 
     // Not self
-    res.send(userProfileOther(data));
+    res.json(userProfileOther(data));
   } catch (err) {
     next(err);
   }
 });
 
-// IMPORTANT: PASS JWT TO DIFF SERVICES VIA AUTH HEADER
-// AUTH GENERATION HAPPENS IN GATEWAY // maybe
-// SERVICES GET TOKEN VIA AUTH HEADER BY API GATEWAY
-// GEN Short TTL TOKEN INTER SERVICE COMM
-// POSTMAN API DOC
-// RETURN AT TO GATEWAY, SET COOKIE IN GATEWAY W/ AT VIA COOKIES
 export default router;
