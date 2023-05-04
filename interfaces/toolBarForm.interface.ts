@@ -6,6 +6,7 @@ import { ToolBarLabel } from "./toolBarLabel.interface";
 export interface ToolBarForm {
   elementType: "toolbarForm",
   relativePath: string, // add relative path
+  disableScrim?:true|false,
   items: (ToolBarForm|Button|ButtonContainer|ToolBarLabel|ToolBarInput)[];
 }
  

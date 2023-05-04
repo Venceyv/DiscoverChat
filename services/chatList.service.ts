@@ -1,7 +1,7 @@
 import { globalLogger } from "../configs/logger.config";
 import { redisGroup, redisRoom } from "../configs/redis.config";
 import { Group, GroupMember } from "../models/index.model";
-import { createConsumer } from "../services/chatMq.service";
+import { createConsumer, getUserData } from "../services/chatMq.service";
 import { makeKey } from "../services/userKey.service";
 import vars from "../configs/vars.config";
 import { retrieveGlobalData, saveGlobalData } from "../services/globalData.service";
@@ -10,13 +10,16 @@ import { sendRequest } from "../services/request.service";
 import { UserResourceRequestType } from "../interfaces/request.interface";
 import { user, DiaLogue, roomMessage, groupMessage } from "../interfaces/data.Interface";
 import { retriveFriendList } from "../services/friendList.service";
-import { ChatContent, ChatListContent } from "../interfaces/chat.interfaces";
+import { ChatListContent } from "../interfaces/chat.interfaces";
 import { ChatListPageJson } from "../interfaces/chatList.interface";
+import { Divider } from "../interfaces/divider.interface";
+import { ToolBar } from "../interfaces/toolBar.interface";
+import { ButtonGroup } from "../interfaces/buttonGroup.interface";
 export const getUserChatList = async (
   userId: string,
   operation: "byTime" | "bySearch",
   keyword: string | null = null
-): Promise<ChatContent | undefined> => {
+): Promise<ChatListContent[] | undefined> => {
   try {
     let chats: DiaLogue[] = [];
     let [friendList, groupList] = await Promise.all([
@@ -32,37 +35,25 @@ export const getUserChatList = async (
         userId: userId,
         others: friendList as string[],
       };
-      await sendRequest(request);
-      const key = makeKey(userId, "getChatList");
-      await createConsumer(
-        vars.rabbitMq.userRMQKey,
-        async (msg: UserResponseType) => {
-          await saveGlobalData(key, msg.data as user[]);
-        },
-        request
+      const friends: user[] = (await getUserData(request)) as user[];
+      const timeNow = new Date();
+      await Promise.all(
+        friends?.map(async (friend) => {
+          const key = makeKey(userId, friend._id as string);
+          const lastMessageData = await redisRoom.lindex(key, -1);
+          let lastMessage: roomMessage | null = null;
+          if (lastMessageData) lastMessage = JSON.parse(lastMessageData);
+          const dialogue: DiaLogue = {
+            type: "room",
+            id: friend._id as string,
+            name: friend.firstName + " " + friend.lastName,
+            avatar: friend.profilePic,
+            messageContent: lastMessage?.content as string,
+            timeStamp: lastMessage ? new Date(lastMessage.timeStamp) : timeNow,
+          };
+          chats.push(dialogue);
+        })
       );
-      const friendData = await retrieveGlobalData(key);
-      if (friendData) {
-        const friends: user[] = JSON.parse(friendData);
-        const timeNow = new Date();
-        await Promise.all(
-          friends?.map(async (friend) => {
-            const key = makeKey(userId, friend._id as string);
-            const lastMessageData = await redisRoom.lindex(key, -1);
-            let lastMessage: roomMessage | null = null;
-            if (lastMessageData) lastMessage = JSON.parse(lastMessageData);
-            const dialogue: DiaLogue = {
-              type: "room",
-              id: friend._id as string,
-              name: friend.lastName,
-              avatar: friend.profilePic,
-              messageContent: lastMessage?.content as string,
-              timeStamp: lastMessage ? new Date(lastMessage.timeStamp) : timeNow,
-            };
-            chats.push(dialogue);
-          })
-        );
-      }
     }
     if (groupList.length != 0) {
       await Promise.all(
@@ -97,7 +88,7 @@ export const getUserChatList = async (
     globalLogger.error(error);
   }
 };
-export const getChatListJson = (chatList: DiaLogue[]): ChatContent => {
+export const getChatListJson = (chatList: DiaLogue[]): ChatListContent[] => {
   let chatListArrayJson: ChatListContent[] = [];
   chatListArrayJson = chatList.map((chat) => {
     const chatJson: ChatListContent = {
@@ -115,115 +106,106 @@ export const getChatListJson = (chatList: DiaLogue[]): ChatContent => {
     };
     return chatJson;
   });
-  const chatListJson: ChatContent = {
-    metadata: {
-      version: "2.0",
-    },
-    regionContent: chatListArrayJson,
-  };
-  return chatListJson;
+  return chatListArrayJson;
 };
 export const getChatListPageJson = (
   frindListToAddGroupApi: string,
-  getChatListApi: string,
+  chatListJson: ChatListContent[],
   getDiscoverPageApi: string,
   getSelfProfileApi: string,
   getChatListPageApi: string
 ) => {
-  const chatListPageJson: ChatListPageJson = {
-    content: [
+  const divider: Divider = {
+    borderColor: "transparent",
+    elementType: "divider",
+  };
+  const toolBar: ToolBar = {
+    elementType: "toolbar",
+    toolbarStyle: "unpadded",
+    middle: [
       {
-        borderColor: "transparent",
-        elementType: "divider",
-      },
-      {
-        elementType: "toolbar",
-        toolbarStyle: "unpadded",
-        middle: [
+        elementType: "toolbarForm",
+        relativePath: `../chatList`, //放这里
+        items: [
           {
-            elementType: "toolbarForm",
-            relativePath: `../chatList/search?q=`, //放这里
-            items: [
+            elementType: "toolbarInput",
+            inputType: "text",
+            name: "q",
+          },
+          {
+            elementType: "buttonContainer",
+            buttons: [
               {
-                elementType: "toolbarInput",
-                inputType: "text",
-                name: "search_input",
-              },
-              {
-                elementType: "buttonContainer",
-                buttons: [
-                  {
-                    elementType: "formButton",
-                    title: "Search",
-                    buttonType: "submit",
-                    actionType: "search",
-                  },
-                ],
+                elementType: "formButton",
+                title: "Search",
+                buttonType: "submit",
+                actionType: "search",
               },
             ],
           },
         ],
-        right: [
-          {
-            elementType: "linkButton",
-            accessoryIcon: "button_add",
-            backgroundColor: "#ffffff",
-            borderRadius: "loose",
-            size: "large",
-            borderWidth: "2px",
-            link: {
-              relativePath: frindListToAddGroupApi, //@groupchat添加朋友的list
-            },
-          },
-        ],
       },
+    ],
+    right: [
       {
-        elementType: "container",
-        content: {
-          ajaxRelativePath: getChatListApi,
-          // @chat的list内容（好友列表）
+        elementType: "linkButton",
+        accessoryIcon: "button_add",
+        backgroundColor: "#ffffff",
+        borderRadius: "loose",
+        size: "large",
+        borderWidth: "2px",
+        link: {
+          relativePath: frindListToAddGroupApi, //@groupchat添加朋友的list
+        },
+      },
+    ],
+  };
+  const buttonGroup: ButtonGroup = {
+    elementType: "buttonGroup",
+    fullWidth: true,
+    buttons: [
+      {
+        elementType: "linkButton",
+        size: "large",
+        borderColor: "#FFFFFF",
+        marginTop: "responsive",
+        title: "discover",
+        link: {
+          relativePath: getDiscoverPageApi,
+          //@discover page的框架，button点击直接转到discover那页
         },
       },
       {
-        elementType: "buttonGroup",
-        fullWidth: true,
-        buttons: [
-          {
-            elementType: "linkButton",
-            size: "large",
-            borderColor: "#FFFFFF",
-            marginTop: "responsive",
-            title: "discover",
-            link: {
-              relativePath: getDiscoverPageApi,
-              //@discover page的框架，button点击直接转到discover那页
-            },
-          },
-          {
-            elementType: "linkButton",
-            size: "large",
-            borderColor: "#FFFFFF",
-            marginTop: "responsive",
-            title: "profile",
-            link: {
-              relativePath: getSelfProfileApi,
-              //@看自己的profile（bar的button）
-            },
-          },
-          {
-            elementType: "linkButton",
-            size: "large",
-            borderColor: "#FFFFFF",
-            marginTop: "responsive",
-            title: "Chat",
-            link: {
-              relativePath: getChatListPageApi,
-              //@下面bar的button连接直接转到chatpage页面
-            },
-          },
-        ],
+        elementType: "linkButton",
+        size: "large",
+        borderColor: "#FFFFFF",
+        marginTop: "responsive",
+        title: "profile",
+        link: {
+          relativePath: getSelfProfileApi,
+          //@看自己的profile（bar的button）
+        },
+      },
+      {
+        elementType: "linkButton",
+        size: "large",
+        borderColor: "#FFFFFF",
+        marginTop: "responsive",
+        title: "Chat",
+        link: {
+          relativePath: getChatListPageApi,
+          //@下面bar的button连接直接转到chatpage页面
+        },
       },
     ],
+  };
+  const content: (Divider | ToolBar | ChatListContent | ButtonGroup)[] = [];
+  content.push(divider);
+  content.push(toolBar);
+  chatListJson.map((chat) => content.push(chat));
+  content.push(buttonGroup);
+  const chatListPageJson: ChatListPageJson = {
+    content: content,
     metadata: {
       version: "2.0",
     },

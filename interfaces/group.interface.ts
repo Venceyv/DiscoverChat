@@ -2,12 +2,14 @@ import { Button } from "./Button.interface";
 import { ButtonGroup } from "./buttonGroup.interface";
 import { Container } from "./container.interface";
 import { Divider } from "./divider.interface";
+import { List } from "./list.interface";
+import { Form } from "./loginForm.interface";
 import { Metadata } from "./metadata.interface";
 import { ToolBar } from "./toolBar.interface";
 import { UserProfile } from "./userProfile.interface";
 
 export interface GroupPage {
-  content: [Divider, ToolBar, Divider, Container, Divider, ToolBar, ButtonGroup];
+  content: (Divider|ToolBar|Divider|Container|Divider|ToolBar|ButtonGroup|Form)[];
   metadata: Metadata;
   contentContainerWidth: "narrow";
 }
@@ -28,7 +30,7 @@ export interface AddGroupMemberList {
   regionContent: GroupMemberContent[];
 }
 export interface GroupMemberPageJson {
-  content: [Divider, ToolBar, Container];
+  content: (Divider|ToolBar|Container|List)[];
   metadata: Metadata;
   contentContainerWidth: "narrow";
 }

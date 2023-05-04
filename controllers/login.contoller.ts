@@ -17,27 +17,8 @@ export const loginUser = async (req: Request, res: Response) => {
     if (cookie == undefined) {  
         const userName = req.query.username;
         //res.cookie("userName", userName, { maxAge: 900000, domain:'https://fsm4sbx-test.modolabs.net/' })
-        res.json({
-          metadata: {
-            version: "2.0",
-            cookies: [
-                {
-                    type:'user',
-                    name: "userName",
-                    value: userName,
-                    domain: "fsm4sbx-test.modolabs.net"
-                }
-            ],
-            redirectLink:{
-              relativePath:'../chatList/page'
-            }
-        },
-        content: [
-
-        ]
-        })
-    };
-  } catch (error) {
+    res.redirect('../chatList');
+  }} catch (error) {
     globalLogger.error(error);
   }
 };

@@ -40,7 +40,8 @@ export interface group {
   lastActivity: Date;
 }
 export interface groupData {
-  name: string;
+  avatar:string,
+  name: string
 }
 export interface groupMessage {
   _id: ObjectId | null | string;

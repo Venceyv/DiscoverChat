@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-06 17:56:12
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-04-26 13:26:07
+ * @LastEditTime: 2023-05-04 02:53:17
  * @FilePath: \discoveryChat\services\chatMq.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -19,7 +19,6 @@ import { rabbitMqLogger } from "../configs/logger.config";
 import { Channel } from "amqplib";
 import { UserResourceRequestType } from "../interfaces/request.interface";
 import vars from "../configs/vars.config";
-import { Response } from "express";
 import { sendRequest } from "./request.service";
 import { UserResponseType } from "../interfaces/response.interface";
 import { retrieveGlobalData, saveGlobalData } from "./globalData.service";

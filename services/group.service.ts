@@ -1,33 +1,29 @@
 import { globalLogger } from "../configs/logger.config";
 import vars from "../configs/vars.config";
+import { ButtonGroup } from "../interfaces/buttonGroup.interface";
 import { ChatContent, UserChatContent } from "../interfaces/chat.interfaces";
+import { Container } from "../interfaces/container.interface";
 import { user } from "../interfaces/data.Interface";
 import { groupMessage, roomMessage } from "../interfaces/data.Interface";
+import { DiscoverPageJson, DiscoverUserContentJson } from "../interfaces/discover.interface";
 import { Divider } from "../interfaces/divider.interface";
 import {
   AddGroupMemberList,
-  CreateGroupPage,
   GroupMemberContent,
-  GroupMemberList,
   GroupMemberPageJson,
   GroupPage,
 } from "../interfaces/group.interface";
+import { List } from "../interfaces/list.interface";
+import { Form } from "../interfaces/loginForm.interface";
 import { UserResourceRequestType } from "../interfaces/request.interface";
 import { UserResponseType } from "../interfaces/response.interface";
-import { createConsumer } from "./chatMq.service";
+import { ToolBar } from "../interfaces/toolBar.interface";
+import { GroupMember } from "../models/index.model";
+import { createConsumer, getUserData } from "./chatMq.service";
 import { retrieveGlobalData, saveGlobalData } from "./globalData.service";
 import { retriveMessage } from "./groupQueue.service";
 import { sendRequest } from "./request.service";
 import { makeKey } from "./userKey.service";
-
-/*
- * @Author: 2FLing 349332929yaofu@gmail.com
- * @Date: 2023-04-26 10:10:02
- * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-04-26 12:26:19
- * @FilePath: \discoveryChat(V1)\services\group.service.ts
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 
 export const editGroupName = (groupName: string, operation: string, userName: string): string => {
   let newGroupName: string;
@@ -96,7 +92,7 @@ export const getGroupMessageJson = async (groupId: string, userId: string): Prom
             id: "standard",
             label: (message.sender as user)!.firstName + " " + (message.sender as user)!.lastName,
             link: {
-              relativePath: `${vars.userServer.url}/${message.sender}`, //!get user profile
+              relativePath: `../user/${message.sender}`, //!get user profile
             },
             name: message.content,
             image: {
@@ -117,7 +113,7 @@ export const getGroupMessageJson = async (groupId: string, userId: string): Prom
 export const getGroupPageJson = (
   chatListApi: string,
   gruopName: string,
-  inviteToGroupApi: string,
+  groupMemberPageApi: string,
   groupMessageApi: string,
   disCoverApi: string,
   selfProfileAPI: string,
@@ -163,7 +159,7 @@ export const getGroupPageJson = (
             borderRadius: "loose",
             borderWidth: "2px",
             link: {
-              relativePath: inviteToGroupApi, //groupchat的添加好友进group聊天或者移出去的页面
+              relativePath: groupMemberPageApi, //groupchat的添加好友进group聊天或者移出去的页面
             },
           },
         ],
@@ -171,35 +167,49 @@ export const getGroupPageJson = (
       divider,
       {
         elementType: "container",
+        id: "gourpMessage",
         content: {
           ajaxRelativePath: groupMessageApi, //groupchat的聊天内容
+          ajaxUpdateInterval: 5,
         },
       },
-      divider,
       {
-        elementType: "toolbar",
-        toolbarStyle: "unpadded",
-        middle: [
+        elementType: "form",
+        relativePath: `../group/newMessage/${groupId}`,
+        disableScrim: true,
+        postType: "background",
+        id: "MessageInputBar",
+        items: [
           {
-            elementType: "toolbarForm",
-            relativePath: `../group/newMessage/${groupId}?message=`, //
-            items: [
+            elementType: "input",
+            inputType: "text",
+            name: "message",
+            label: "",
+            required: true,
+          },
+          {
+            elementType: "buttonContainer",
+            buttons: [
               {
-                elementType: "toolbarInput", // send message at group chat private message
-                inputType: "text",
-                name: "search_input",
+                elementType: "formButton",
+                title: "Send",
+                buttonType: "submit",
+                actionType: "constructive",
               },
               {
-                elementType: "buttonContainer",
-                buttons: [
-                  {
-                    elementType: "formButton",
-                    title: "Send",
-                    actionType: "destructiveQuiet",
-                  },
-                ],
+                elementType: "formButton",
+                title: "Reset",
+                buttonType: "reset",
+                actionType: "destructive",
               },
             ],
+          },
+        ],
+        events: [
+          {
+            eventName: "success",
+            action: "resetForm",
+            targetId: "MessageInputBar",
           },
         ],
       },
@@ -247,15 +257,14 @@ export const getGroupPageJson = (
   };
   return groupChatJson;
 };
-export const getGroupMemberListJson = (groupMembers: user[], groupId: string): GroupMemberList => {
+export const getGroupMemberListJson = (groupMembers: user[], groupId: string,selfId:string): GroupMemberContent[] => {
   let groupMembercontentArray: GroupMemberContent[] = [];
   groupMembercontentArray = groupMembers.map((groupMember) => {
     const groupMembercontent: GroupMemberContent = {
-      elementType: "nameTag",
-      id: "standard",
-      name: groupMember.firstName + " " + groupMember.lastName,
+      id: `${groupMember._id}`,
+      title: groupMember.firstName + " " + groupMember.lastName,
       link: {
-        relativePath: `${vars.userServer.url}/${groupMember._id}`, //!get user profile
+        relativePath: `../user/${groupMember._id}`, //!get user profile
       },
       description: groupMember.majorList[0],
       image: {
@@ -263,56 +272,47 @@ export const getGroupMemberListJson = (groupMembers: user[], groupId: string): G
         alt: "photo of " + groupMember.firstName,
       },
       accessoryButton: {
-        actionStyle: "normal",
-        title: groupMember == groupMembers[0] ? "Quit" : "Remove",
+        title: groupMember._id == selfId ? "Quit" : "Remove",
         events: [
           {
             eventName: "click",
-            targetId: "button",
+            targetId: `${groupMember._id}`,
             action: "ajaxUpdate",
             ajaxRelativePath:
-              groupMember == groupMembers[0]
+            groupMember._id == selfId 
                 ? `../group/leaveGroup/${groupId}`
                 : `../group/removeUser/${groupId}/${groupMember._id as string}`,
             requestMethod: "delete",
-          },
+          }
         ],
         textColor: "theme:focal_link_color",
       },
     };
     return groupMembercontent;
   }) as GroupMemberContent[];
-  const groupMemberListJson: GroupMemberList = {
-    metadata: {
-      version: "2.0",
-    },
-    regionContent: groupMembercontentArray,
-  };
-  return groupMemberListJson;
+  return groupMembercontentArray;
 };
-export const getFriendNotInGroupJson = (friendNotInGroup: user[], groupId: string): AddGroupMemberList => {
+export const getFriendNotInGroupJson = (friendNotInGroup: user[], groupId: string): GroupMemberContent[] => {
   const addGroupMemberContentArray: GroupMemberContent[] = friendNotInGroup.map((friend) => {
     const addGroupMemberContent: GroupMemberContent = {
-      elementType: "nameTag",
-      id: "standard",
-      name: friend.firstName + " " + friend.lastName,
+      id: `${friend._id}`,
+      title: friend.firstName + " " + friend.lastName,
       link: {
-        relativePath: friend._id as string,
+        relativePath: `../user/${friend._id}`, //!get user profile
       },
-      description: friend.description,
+      description: friend.majorList[0],
       image: {
         url: friend.profilePic,
-        alt: "Photo of " + friend.firstName,
+        alt: "photo of " + friend.firstName,
       },
       accessoryButton: {
-        actionStyle: "normal",
-        title: "Add",
+        title: "Invite",
         events: [
           {
             eventName: "click",
-            targetId: "button",
+            targetId: `${friend._id}`,
             action: "ajaxUpdate",
-            ajaxRelativePath: `../group/newMember/${groupId}/${friend._id?.toString()}`,
+            ajaxRelativePath: `../group/newMember/${groupId}/${friend._id as string}`,
             requestMethod: "post",
           },
         ],
@@ -321,13 +321,7 @@ export const getFriendNotInGroupJson = (friendNotInGroup: user[], groupId: strin
     };
     return addGroupMemberContent;
   });
-  const friendNotInGroupJson: AddGroupMemberList = {
-    metadata: {
-      version: "2.0",
-    },
-    regionContent: addGroupMemberContentArray as GroupMemberContent[],
-  };
-  return friendNotInGroupJson;
+  return addGroupMemberContentArray;
 };
 export const GetAddFriendToGroupJson = (friendList: user[]): AddGroupMemberList => {
   const addGroupMemberContentArray: GroupMemberContent[] = friendList.map((friend) => {
@@ -336,7 +330,7 @@ export const GetAddFriendToGroupJson = (friendList: user[]): AddGroupMemberList 
       id: "standard",
       name: friend.firstName + " " + friend.lastName,
       link: {
-        relativePath: `${vars.userServer.url}/${friend._id}`, //!get user profile
+        relativePath: `../user/${friend._id}`, //!get user profile
       },
       description: friend.description,
       image: {
@@ -367,40 +361,69 @@ export const GetAddFriendToGroupJson = (friendList: user[]): AddGroupMemberList 
   };
   return friendNotInGroupJson;
 };
-export const getCreateGroupJson = (chatListAPI: string, friendListAPI: string): CreateGroupPage => {
-  const createGroupPage: CreateGroupPage = {
-    content: [
+export const getCreateGroupJson = (
+  userContentJson: DiscoverUserContentJson[],
+  discoverPageAPI: string,
+  chatListAPI: string,
+  selfProfileAPI: string
+): DiscoverPageJson => {
+  const buttonGroup: ButtonGroup = {
+    elementType: "buttonGroup",
+    fullWidth: true,
+    buttons: [
       {
-        borderColor: "transparent",
-        elementType: "divider",
+        elementType: "linkButton",
+        size: "large",
+        borderColor: "#FFFFFF",
+        marginTop: "responsive",
+        title: "discover",
+        link: {
+          relativePath: discoverPageAPI, //跳转到discover页面
+        },
       },
       {
-        elementType: "toolbar",
-        toolbarStyle: "unpadded",
-        left: [
-          {
-            elementType: "linkButton",
-            accessoryIcon: "confirm",
-            backgroundColor: "#ffffff",
-            borderRadius: "loose",
-            size: "large",
-            borderWidth: "2px",
-            link: {
-              relativePath: chatListAPI,
-            },
-          },
-        ],
+        elementType: "linkButton",
+        size: "large",
+        borderColor: "#FFFFFF",
+        marginTop: "responsive",
+        title: "profile",
+        link: {
+          relativePath: selfProfileAPI, //! user profile
+        },
       },
       {
-        elementType: "container",
-        content: {
-          ajaxRelativePath: friendListAPI, //chatpag加好友的list页面
+        elementType: "linkButton",
+        size: "large",
+        borderColor: "#FFFFFF",
+        marginTop: "responsive",
+        title: "chat",
+        link: {
+          relativePath: chatListAPI,
         },
       },
     ],
+  };
+  const divider: Divider = {
+    borderColor: "transparent",
+    elementType: "divider",
+  };
+  const content: (Divider | ToolBar | Container | ButtonGroup | List)[] = [];
+  let items: DiscoverUserContentJson[] = [];
+  content.push(divider);
+  userContentJson.map((value) => {
+    items.push(value);
+  });
+  const list: List = {
+    elementType: "list",
+    items: items,
+  };
+  content.push(list);
+  content.push(buttonGroup);
+  const createGroupPage: DiscoverPageJson = {
     metadata: {
       version: "2.0",
     },
+    content: content,
     contentContainerWidth: "narrow",
   };
   return createGroupPage;
@@ -408,58 +431,47 @@ export const getCreateGroupJson = (chatListAPI: string, friendListAPI: string): 
 export const getGroupMemberPageJson = (
   groupName: string,
   getGroupPageApi: string,
-  getFriendNotInGroupPageApi: string,
-  getGroupMemberApi: string
+  FriendNotInGroupJson: GroupMemberContent[],
+  GroupMemberJson: GroupMemberContent[]
 ): GroupMemberPageJson => {
-  const groupMemberPage: GroupMemberPageJson = {
-    content: [
+  const content: (Divider | ToolBar | Container | ButtonGroup | Form | List)[] = [];
+  const divider: Divider = {
+    borderColor: "transparent",
+    elementType: "divider",
+  };
+  const toolBar = {
+    elementType: "toolbar",
+    toolbarStyle: "unpadded",
+    middle: [
       {
-        borderColor: "transparent",
-        elementType: "divider",
+        elementType: "toolbarLabel",
+        label: groupName, //group名字
       },
+    ],
+    left: [
       {
-        elementType: "toolbar",
-        toolbarStyle: "unpadded",
-        middle: [
-          {
-            elementType: "toolbarLabel",
-            label: groupName, //group名字
-          },
-        ],
-        left: [
-          {
-            elementType: "linkButton",
-            accessoryIcon: "dropleft",
-            backgroundColor: "#ffffff",
-            borderRadius: "loose",
-            size: "large",
-            borderWidth: "2px",
-            link: {
-              relativePath: getGroupPageApi, //返回到groupchat的页面（里面的ajax会load content）
-            },
-          },
-        ],
-        right: [
-          {
-            elementType: "linkButton",
-            accessoryIcon: "button_add", //添加好友进入群聊
-            backgroundColor: "#ffffff",
-            borderRadius: "loose",
-            size: "large",
-            borderWidth: "2px",
-            link: {
-              relativePath: getFriendNotInGroupPageApi, //返回到groupchat的页面）
-            },
-          },
-        ],
-      },
-      {
-        elementType: "container",
-        content: {
-          ajaxRelativePath: getGroupMemberApi, //groupchat的朋友列表，进行浏览和移除群聊
+        elementType: "linkButton",
+        accessoryIcon: "dropleft",
+        backgroundColor: "#ffffff",
+        borderRadius: "loose",
+        size: "large",
+        borderWidth: "2px",
+        link: {
+          relativePath: getGroupPageApi, //返回到groupchat的页面（里面的ajax会load content）
         },
       },
     ],
+  };
+  const items: GroupMemberContent[] = GroupMemberJson.concat(FriendNotInGroupJson);
+  const list: List = {
+    elementType: "list",
+    items: items,
+  };
+  content.push(divider);
+  content.push(toolBar);
+  content.push(list);
+  const groupMemberPage: GroupMemberPageJson = {
+    content: content,
     metadata: {
       version: "2.0",
     },
@@ -467,65 +479,60 @@ export const getGroupMemberPageJson = (
   };
   return groupMemberPage;
 };
-export const getFriendNotInGroupPageJson = (
-  groupName: string,
-  getGroupMemberPageApi: string,
-  getGroupPageApi: string,
-  getFriendNotInGroupApi: string
-) => {
-  const groupMemberPage: GroupMemberPageJson = {
-    content: [
-      {
-        borderColor: "transparent",
-        elementType: "divider",
+export const getGroupMemberStatus = async (userId: string, groupId: string, selfUID: string) => {
+  try {
+    const inGroup = await GroupMember.findOne({ user: userId, group: groupId }).lean();
+    const request: UserResourceRequestType = {
+      resource: "users",
+      type: "notSearch",
+      fulFill: false,
+      userId: selfUID,
+      others: [userId],
+    };
+    const userData = await getUserData(request);
+    let userContentJson: GroupMemberContent[];
+    if (inGroup) userContentJson = getGroupMemberListJson(userData as user[], groupId,selfUID);
+    else userContentJson = getFriendNotInGroupJson(userData as user[], groupId);
+    const groupMemberStatus = {
+      metadata:{
+        version:"2.0",
       },
-      {
-        elementType: "toolbar",
-        toolbarStyle: "unpadded",
-        middle: [
-          {
-            elementType: "toolbarLabel",
-            label: groupName, //group名字
-          },
-        ],
-        left: [
-          {
-            elementType: "linkButton",
-            accessoryIcon: "dropleft",
-            backgroundColor: "#ffffff",
-            borderRadius: "loose",
-            size: "large",
-            borderWidth: "2px",
-            link: {
-              relativePath: getGroupMemberPageApi,
-            },
-          },
-        ],
-        right: [
-          {
-            elementType: "linkButton",
-            accessoryIcon: "button_add",
-            backgroundColor: "#ffffff",
-            borderRadius: "loose",
-            size: "large",
-            borderWidth: "2px",
-            link: {
-              relativePath: getGroupPageApi,
-            },
-          },
-        ],
-      },
-      {
-        elementType: "container",
-        content: {
-          ajaxRelativePath: getFriendNotInGroupApi, //groupchat的朋友列表，进行浏览和移除群聊
-        },
-      },
-    ],
-    metadata: {
-      version: "2.0",
-    },
-    contentContainerWidth: "narrow",
-  };
-  return groupMemberPage;
+      elementFields:userContentJson[0]
+    };
+    return groupMemberStatus;
+  } catch (error) {
+    globalLogger.error(error);
+  }
 };
+export const getFriendListJson =  (friendData:user[]) => {
+  const userSearchContentArray: DiscoverUserContentJson[] = friendData.map(friend => {
+    let userSearchContent: DiscoverUserContentJson;
+      userSearchContent = {
+        id:`${friend._id}`,
+        title: friend.firstName + " " + friend.lastName,
+        link: {
+          relativePath: `../user/${friend._id}`,
+        },
+        description: friend.majorList[0],
+        image: {
+          url: friend.profilePic,
+          alt: `Photo of ${friend.firstName + " " + friend.lastName}`,
+        },
+        accessoryButton: {
+          title: "Invite",
+          events: [
+            {
+              eventName: "click",
+              targetId: `${friend._id}`,
+              action: "ajaxUpdate",
+              ajaxRelativePath: `../group/${friend._id}`,
+              requestMethod:"post",
+            },
+          ],
+          textColor: "theme:focal_link_color",
+        },
+      };
+      return userSearchContent;
+    });
+    return userSearchContentArray;
+}

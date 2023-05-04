@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-26 01:34:27
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-03 00:45:53
+ * @LastEditTime: 2023-05-03 23:26:21
  * @FilePath: \discoveryChat(V1)\services\jwt.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -66,14 +66,6 @@ export const verifyUser = async (req: Request, res: Response, next: NextFunction
     */
   try {
     let userName: string | undefined = "yafking";
-    const detector = new DeviceDetector({
-      clientIndexes: true,
-      deviceIndexes: true,
-      deviceAliasCode: false,
-    });
-    const userAgent =
-      "Mozilla/5.0 (Linux; Android 5.0; NX505J Build/KVT49L) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.78 Mobile Safari/537.36";
-    const result = detector.detect(userAgent);
     if (userName) {
       switch (userName) {
         case "yafking":
@@ -88,7 +80,7 @@ export const verifyUser = async (req: Request, res: Response, next: NextFunction
         default:
           const error = new APIError(401, "invalid token");
           throw error;
-      }
+      }    
       return next();
     }
     const error = new APIError(401, "invalid token");

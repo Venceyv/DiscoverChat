@@ -7,13 +7,15 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import {Router} from "express";
-import {  deleteRoom, getRoomMessage, getRoomPage, newRoom, sentToRoom } from "../controllers/chatRoom.controller";
+import {  deleteRoom, getDeleteRoom, getNewRoom, getRoomMessage, getRoomPage, newRoom, sentToRoom } from "../controllers/chatRoom.controller";
 import {  checkIfFriends } from "../middlewares/room.middleware";
 import { verifyUser } from "../services/jwt.service";
 const chatRoomRouter = Router();
 
-chatRoomRouter.get('/:userId',verifyUser,checkIfFriends,getRoomMessage);
-chatRoomRouter.get('/roomPage/:userId',verifyUser,checkIfFriends,getRoomPage);
+chatRoomRouter.get('/:userId',verifyUser,checkIfFriends,getRoomPage);
+chatRoomRouter.get('/add/:userId',verifyUser,getNewRoom);
+chatRoomRouter.get('/delete/:userId',verifyUser,getDeleteRoom);
+chatRoomRouter.get('/message/:userId',verifyUser,checkIfFriends,getRoomMessage);
 chatRoomRouter.post('/:userId',verifyUser,newRoom);
 chatRoomRouter.post('/newMessage/:userId',verifyUser,checkIfFriends,sentToRoom);
 chatRoomRouter.delete('/:userId',verifyUser,checkIfFriends,deleteRoom);

@@ -2,47 +2,48 @@ import { roomLogger } from "../configs/logger.config";
 import vars from "../configs/vars.config";
 import { ChatContent, UserChatContent } from "../interfaces/chat.interfaces";
 import { roomMessage, user } from "../interfaces/data.Interface";
+import { Divider } from "../interfaces/divider.interface";
 import { UserResourceRequestType } from "../interfaces/request.interface";
 import { UserResponseType } from "../interfaces/response.interface";
 import { RoomPageJson } from "../interfaces/room.interface";
-import { createConsumer } from "./chatMq.service";
+import { createConsumer, getUserData } from "./chatMq.service";
+import { getDiscoverUserContentJson } from "./discover.service";
 import { retrieveGlobalData, saveGlobalData } from "./globalData.service";
 import { sendRequest } from "./request.service";
 import { retriveMessage } from "./roomQueue.service";
 import { makeKey } from "./userKey.service";
 
 export const getRoomMessageJson = async (requesterId: string, userId: string): Promise<ChatContent | undefined> => {
-  try {
-    let messages: Array<string> | undefined;
-    let messagesObj: Array<roomMessage> = [];
-    let chatContent = {
+    try {
+      const userList: Array<string> = [];
+      let messages: Array<string> | undefined = [];
+      let messagesObj: Array<roomMessage> = [];
+      let chatContent = {
         metadata: {
           version: "2.0",
         },
       } as ChatContent;
-    const roomId = makeKey(requesterId, userId);
-    messages = await retriveMessage(roomId);
-    if (messages?.length == 0) {
+      const roomkey = makeKey(requesterId,userId);
+      messages = await retriveMessage(roomkey);
+      if (messages?.length == 0) {
         chatContent.regionContent = [];
-      }
-    else{
-        let userList: Array<string | user> = [];
-        messages!.map((message) => {
-          const messageObj: roomMessage = JSON.parse(message);
-          messagesObj.push(messageObj);
-          userList.push(messageObj.sender!);
+      } else {
+        messages?.map((message) => {
+          const messegeOBj: roomMessage = JSON.parse(message);
+          messagesObj?.push(messegeOBj);
+          userList.push(messegeOBj.sender as string);
         });
         const request: UserResourceRequestType = {
           resource: "users",
-          userId: requesterId,
           type: "notSearch",
           fulFill: false,
-          others: userList! as string[],
+          userId: userId,
+          others: userList,
         };
         await sendRequest(request);
-        const key = makeKey(userId, roomId);
+        const key = makeKey(userId, roomkey);
         await createConsumer(
-          vars.rabbitMq.userRMQKey,
+          vars.rabbitMq.userRMQKey!,
           async (msgObj: UserResponseType) => {
             let index = 0;
             messagesObj!.map((messageObj) => {
@@ -56,108 +57,124 @@ export const getRoomMessageJson = async (requesterId: string, userId: string): P
           },
           request
         );
-        const roomMessageData = await retrieveGlobalData(key);
-        if (roomMessageData) {
-            const groupMessage: roomMessage[] = JSON.parse(roomMessageData as string);
-            const groupMessageJson: UserChatContent[] = groupMessage.map((message) => {
-              const chatContent: UserChatContent = {
-                elementType: "nameTag",
-                id: "standard",
-                label: (message.sender as user)!.firstName + " " + (message.sender as user)!.lastName,
-                link: {
-                  relativePath: `${vars.userServer.url}/${(message.sender as user)._id}`, //!get user profile
-                },
-                name: message.content,
-                image: {
-                  url: (message.sender as user).profilePic,
-                  alt: "Photo of " + (message.sender as user).firstName,
-                },
-              };
-              return chatContent;
-            });
-            chatContent.regionContent = groupMessageJson;
-          }
+        const messageData = await retrieveGlobalData(key);
+        if (messageData) {
+          const roomMessage: roomMessage[] = JSON.parse(messageData as string);
+          const roomMessageJson: UserChatContent[] = roomMessage.map((message) => {
+            const chatContent: UserChatContent = {
+              elementType: "nameTag",
+              id: "standard",
+              label: (message.sender as user)!.firstName + " " + (message.sender as user)!.lastName,
+              link: {
+                relativePath: `${vars.userServer.url}/${message.sender}`, //!get user profile
+              },
+              name: message.content,
+              image: {
+                url: (message.sender as user).profilePic,
+                alt: "Photo of " + (message.sender as user).firstName,
+              },
+            };
+            return chatContent;
+          });
+          chatContent.regionContent = roomMessageJson;
+        }
+      }
+      return chatContent;
+    } catch (error) {
+      roomLogger.error(error);
     }
-    return chatContent;
-  } catch (error) {
-    roomLogger.error(error);
-  }
-};
-export const getRoomPageJson = (chatListAPI:string,friendName:string,getRoomMessageAPI:string,disCoverApi:string,selfProfileAPI:string,friendId:string):RoomPageJson=>{
-    const roomPageJson:RoomPageJson ={
-        content: [
+  };
+  export const getRoomPageJson = (
+    chatListApi: string,
+    roomName: string,
+    roomMessageApi: string,
+    disCoverApi: string,
+    selfProfileAPI: string,
+    roomId: string
+  ) => {
+    const divider: Divider = {
+      elementType: "divider",
+      borderStyle: "solid",
+      borderWidth: "3px",
+    };
+    const roomChatJson: RoomPageJson = {
+      content: [
+        {
+          borderColor: "transparent",
+          elementType: "divider",
+        },
+        {
+          elementType: "toolbar",
+          toolbarStyle: "unpadded",
+          left: [
             {
-                borderColor: "transparent",
-                elementType: "divider"
+              elementType: "linkButton",
+              accessoryIcon: "dropleft",
+              backgroundColor: "#ffffff",
+              borderRadius: "loose",
+              borderWidth: "2px",
+              link: {
+                relativePath: chatListApi, //返回到chat页面（chat页面里面的ajax再load具体的content）
+              },
             },
-           {
-                elementType: "toolbar",
-                toolbarStyle: "unpadded",
-                left: [
-                    {
-                        elementType: "linkButton",
-                        accessoryIcon: "dropleft",
-                        backgroundColor: "#ffffff",
-                        borderRadius: "loose",
-                        borderWidth: "2px",
-                        link: {
-                            relativePath: chatListAPI//从windowchat具体聊天框返回到chat page
-                        }
-                    }
-                ],
-                middle: [
-                    {
-                        elementType: "toolbarLabel",
-                        label: friendName
-                    }
-                ]
-                
-            },
+          ],
+          middle: [
             {
-                elementType: "divider",
-                borderStyle: "solid",
-                borderWidth: "3px"
+              elementType: "toolbarLabel",
+              label: roomName, //group里面的人名字
             },
+          ],
+        },
+        divider,
+        {
+          elementType: "container",
+          id: "roomMessage",
+          content: {
+            ajaxRelativePath: roomMessageApi, //groupchat的聊天内容
+            ajaxUpdateInterval: 5,
+          },
+        },
+        {
+          elementType: "form",
+          relativePath: `../room/newMessage/${roomId}`,
+          disableScrim: true,
+          postType: "background",
+          id: "MessageInputBar",
+          items: [
             {
-                elementType: "container",
-                content: {
-                    ajaxRelativePath: getRoomMessageAPI//windowchat的聊天内容
-                }
-            },
-            {
-                elementType: "divider",
-                borderStyle: "solid",
-                borderWidth: "3px"
-            },
-            {
-                elementType: "toolbar",
-                toolbarStyle: "unpadded",
-                middle: [
-                    {
-                        elementType: "toolbarForm",
-                        relativePath: `../room/newMessage/${friendId}?content=`,//relative path
-                        items: [
-                            {
-                                elementType: "toolbarInput",// send message at window chat private message
-                                inputType: "text",
-                                name: "search_input"
-                            },
-                            {
-                                elementType: "buttonContainer",
-                                buttons: [
-                                    {
-                                        elementType: "formButton",
-                                        title: "Send",
-                                        buttonType:'submit',
-                                        actionType: "destructiveQuiet"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+              elementType: "input",
+              inputType: "text",
+              name: "message",
+              label: "",
+              required: true,
             },
             {
+              elementType: "buttonContainer",
+              buttons: [
+                {
+                  elementType: "formButton",
+                  title: "Send",
+                  buttonType: "submit",
+                  actionType: "constructive",
+                },
+                {
+                  elementType: "formButton",
+                  title: "Reset",
+                  buttonType: "reset",
+                  actionType: "destructive",
+                },
+              ],
+            },
+          ],
+          events: [
+            {
+              eventName: "success",
+              action: "resetForm",
+              targetId: "MessageInputBar",
+            },
+          ],
+        },
+        {
           elementType: "buttonGroup",
           fullWidth: true,
           buttons: [
@@ -168,8 +185,8 @@ export const getRoomPageJson = (chatListAPI:string,friendName:string,getRoomMess
               marginTop: "responsive",
               title: "discover",
               link: {
-                relativePath: disCoverApi//跳转到discover页面
-              }
+                relativePath: disCoverApi, //跳转到discover页面
+              },
             },
             {
               elementType: "linkButton",
@@ -178,8 +195,8 @@ export const getRoomPageJson = (chatListAPI:string,friendName:string,getRoomMess
               marginTop: "responsive",
               title: "profile",
               link: {
-                relativePath: selfProfileAPI//跳转到自己的profile
-              }
+                relativePath: selfProfileAPI, //! self profile
+              },
             },
             {
               elementType: "linkButton",
@@ -188,16 +205,34 @@ export const getRoomPageJson = (chatListAPI:string,friendName:string,getRoomMess
               marginTop: "responsive",
               title: "Chat",
               link: {
-                relativePath: chatListAPI//跳转到chat页面
-              }
-            }
-          ]
-        }
-        ],
-        metadata: {
-            "version": "2.0"
+                relativePath: chatListApi, //跳转到chat页面
+              },
+            },
+          ],
         },
-        contentContainerWidth: "narrow"
-    }
-    return roomPageJson;
+      ],
+      metadata: {
+        version: "2.0",
+      },
+      contentContainerWidth: "narrow",
+    };
+    return roomChatJson;
+  };
+export const getCurrentFriendStatus = async (friendUIDs:string,selfUID:string)=>{
+  const request:UserResourceRequestType={
+    resource:'users',
+    type:'notSearch',
+    fulFill:false,
+    userId:selfUID,
+    others:[friendUIDs]
+  }
+  const userData = await getUserData(request);
+  const userContentJson = await getDiscoverUserContentJson(userData as user[],selfUID);
+  const friendStatus = {
+    metadata:{
+      version:"2.0",
+    },
+    elementFields:userContentJson[0]
+  };
+  return friendStatus;
 }

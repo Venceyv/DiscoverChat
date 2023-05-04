@@ -21,3 +21,7 @@ export const redisFriendList = new Redis(Number(vars.redisFriendList.port),vars.
 export const redisGlobalData = new Redis(Number(vars.redisGlobalData.port),vars.redisGlobalData.host,{
   password:vars.redisGlobalData.password,
 })
+
+export const redisBlockList = new Redis(Number(vars.redisBlockList.port),vars.redisBlockList.host,{
+  password:vars.redisBlockList.password,
+})

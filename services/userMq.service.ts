@@ -9,7 +9,7 @@
 import amqp, { ChannelWrapper } from "amqp-connection-manager";
 import { rabbitMqLogger } from "../configs/logger.config";
 import { Channel } from "amqplib";
-import { RecommandUserResourceRequestType, SearchUserResourceRequestType } from "../interfaces/request.interface";
+import {  SearchUserResourceRequestType } from "../interfaces/request.interface";
 import vars from "../configs/vars.config";
 import { UserResponseType } from "../interfaces/response.interface";
 import { User } from "../models/index.model";

@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-27 10:32:20
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-03 02:04:38
+ * @LastEditTime: 2023-05-03 07:04:17
  * @FilePath: \discoveryChat(V1)\interfaces\discover.interface.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -14,9 +14,10 @@ import { Form } from "./loginForm.interface";
 import { Metadata } from "./metadata.interface";
 import { ToolBar } from "./toolBar.interface";
 import { UserProfile } from "./userProfile.interface";
+import { List } from "./list.interface";
 
 export interface DiscoverPageJson {
-  content: (Divider | ToolBar | Container | ButtonGroup | Form|DiscoverUserContentJson)[];
+  content: (Divider | ToolBar | Container | ButtonGroup | Form|List)[];
   metadata: Metadata;
   contentContainerWidth: "narrow";
 }

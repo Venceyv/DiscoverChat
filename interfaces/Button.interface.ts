@@ -17,5 +17,5 @@ export interface Button {
   size?: string,
   title?:string,
   textColor?:string,
-  events?:Event[]
+  events?:Event[],
 }

@@ -1,7 +1,9 @@
 export interface UserProfile {
-  elementType: "nameTag";
-  id: string;
-  name: string;
+  elementType?: "nameTag";
+  title?:string,
+  id?: string;
+  name?: string;
+  label?:string,
   link: {
     relativePath: string; //看YILONG WANG的profile
   };
@@ -11,4 +13,3 @@ export interface UserProfile {
     alt: string|"Photo of Jonathan Surasmith"; //头像
   };
 };
-

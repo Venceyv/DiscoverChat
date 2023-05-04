@@ -10,6 +10,7 @@ import { APIError, errorHandler } from "./middlewares/error.middleware";
 import { globalLogger } from "./configs/logger.config";
 import cookieParser from "cookie-parser";
 import { loginUserRouter } from "./routers/loginUser.router";
+import { userRouter } from "./routers/user.router";
 export const app = express();
 app.use(cookieParser());
 app.use(cors());
@@ -24,6 +25,7 @@ app.use("/tools", toolsRouter);
 app.use('/group',chatGroupRouter);
 app.use('/chatList',chatListRouter);
 app.use('/discover',discoverRouter);
+app.use('/user',userRouter)
 app.use(express.json());
 app.use((req,res,next)=>{
   const error = new APIError(404,'Invalid source path.');

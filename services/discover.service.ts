@@ -2,24 +2,21 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-11 00:50:30
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-03 03:14:21
+ * @LastEditTime: 2023-05-04 10:45:45
  * @FilePath: \discoveryChat\services\discover.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import { Container, log } from "winston";
+import { Container } from "winston";
 import vars from "../configs/vars.config";
-import { ButtonContainer } from "../interfaces/buttonContainer.interface";
 import { ButtonGroup } from "../interfaces/buttonGroup.interface";
 import { user } from "../interfaces/data.Interface";
-import { DiscoverPageJson, DiscoverUserContentJson, DiscoverhContentJson } from "../interfaces/discover.interface";
+import { DiscoverPageJson, DiscoverUserContentJson } from "../interfaces/discover.interface";
 import { Divider } from "../interfaces/divider.interface";
-import { FormButton } from "../interfaces/formbutton.interface";
-import { SearchContentJson, SearchUserContentJson } from "../interfaces/search.interface";
+import { SearchUserContentJson } from "../interfaces/search.interface";
 import { ToolBar } from "../interfaces/toolBar.interface";
-import { ToolBarForm } from "../interfaces/toolBarForm.interface";
-import { ToolBarInput } from "../interfaces/toolBarInput.interface";
 import { isFriends, retriveFriendList } from "./friendList.service";
 import { Form } from "../interfaces/loginForm.interface";
+import { List } from "../interfaces/list.interface";
 export const getMightBeFriendList = async (
   requester: string,
   friendList: Array<string>
@@ -92,7 +89,7 @@ export const getDiscoverPageJson = (
       },
     ],
   };
-  const divider:Divider = {
+  const divider: Divider = {
     borderColor: "transparent",
     elementType: "divider",
   };
@@ -126,12 +123,18 @@ export const getDiscoverPageJson = (
       },
     ],
   };
-  const content: (Divider | ToolBar | Container | ButtonGroup | Form | DiscoverUserContentJson)[] = [];
+  const content: (Divider | ToolBar | Container | ButtonGroup | Form | List)[] = [];
+  let items: DiscoverUserContentJson[] = [];
   content.push(divider);
   content.push(toolBar);
-  userContentJson.forEach((value)=>{
-    content.push(value);
+  userContentJson.map((value) => {
+    items.push(value);
   });
+  const list: List = {
+    elementType: "list",
+    items: items,
+  };
+  content.push(list);
   content.push(buttonGroup);
   const discoverPageJson: DiscoverPageJson = {
     metadata: {
@@ -145,7 +148,6 @@ export const getDiscoverPageJson = (
 export const getDiscoverUserContentJson = async (
   userData: user[],
   requesterId: string,
-  targetId: string
 ): Promise<DiscoverUserContentJson[]> => {
   const userSearchContentArray: DiscoverUserContentJson[] = await Promise.all(
     userData.map(async (user) => {
@@ -153,11 +155,10 @@ export const getDiscoverUserContentJson = async (
       if (user._id != requesterId) {
         const isFriend = await isFriends(requesterId, user._id as string);
         userSearchContent = {
-          elementType: "nameTag",
-          id: "standard",
-          name: user.firstName + " " + user.lastName,
+          id:`${user._id}`,
+          title: user.firstName + " " + user.lastName,
           link: {
-            relativePath: `${vars.userServer.url}/${user._id}`,
+            relativePath: `../user/${user._id}`,
           },
           description: user.majorList[0],
           image: {
@@ -165,12 +166,11 @@ export const getDiscoverUserContentJson = async (
             alt: `Photo of ${user.firstName + " " + user.lastName}`,
           },
           accessoryButton: {
-            actionStyle: "normal",
             title: isFriend ? "Remove Friend" : "Add Friend",
             events: [
               {
                 eventName: "click",
-                targetId: targetId,
+                targetId: `${user._id}`,
                 action: "ajaxUpdate",
                 ajaxRelativePath: `../room/${user._id}`,
                 requestMethod: isFriend ? "delete" : "post",
@@ -181,11 +181,9 @@ export const getDiscoverUserContentJson = async (
         };
       } else {
         userSearchContent = {
-          elementType: "nameTag",
-          id: "standard",
-          name: user.firstName + " " + user.lastName,
+          title: user.firstName + " " + user.lastName,
           link: {
-            relativePath: `${vars.userServer.url}/${user._id}`,
+            relativePath: `../user/${user._id}`,
           },
           description: user.majorList[0],
           image: {
@@ -194,7 +192,6 @@ export const getDiscoverUserContentJson = async (
           },
         };
       }
-
       return userSearchContent;
     })
   );
@@ -210,13 +207,11 @@ export const getSearchUserContentJson = async (
       let userSearchContent: SearchUserContentJson;
       if (user._id != requesterId) {
         const isFriend = await isFriends(requesterId, user._id as string);
-        console.log(isFriend)
         userSearchContent = {
-          elementType: "nameTag",
           id: "searchResult",
-          name: user.firstName + " " + user.lastName,
+          title: user.firstName + " " + user.lastName,
           link: {
-            relativePath: `${vars.userServer.url}/${user._id}`,
+            relativePath: `../user/${user._id}`,
           },
           description: user.majorList[0],
           image: {
@@ -224,27 +219,16 @@ export const getSearchUserContentJson = async (
             alt: `Photo of ${user.firstName + " " + user.lastName}`,
           },
           accessoryButton: {
-            actionStyle: "normal",
-            title: isFriend ? "Remove Friend" : "Add Friend",
-            events: [
-              {
-                eventName: "click",
-                targetId: "searchResult",
-                action: "ajaxUpdate",
-                ajaxRelativePath: `../room/${user._id}`,
-                requestMethod: isFriend ? "delete" : "post",
-              },
-            ],
+            title: isFriend ? "Friend" : "Stranger",
             textColor: "theme:focal_link_color",
           },
         };
       } else {
         userSearchContent = {
-          elementType: "nameTag",
           id: "standard",
           name: user.firstName + " " + user.lastName,
           link: {
-            relativePath: `${vars.userServer.url}/${user._id}`,
+            relativePath: `../user/${user._id}`,
           },
           description: user.majorList[0],
           image: {
