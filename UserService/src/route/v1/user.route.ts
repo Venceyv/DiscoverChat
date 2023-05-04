@@ -6,6 +6,7 @@ import User from '../../model/user.model';
 import { userSchema } from '../../validator/user.validator';
 import {
   UserProfileType,
+  UserProfileTypeWithID,
   userProfileNotFound,
   userProfileOther,
   userProfileSelf,
@@ -65,7 +66,23 @@ router.route('/:userId').get(async (req, res, next) => {
       return;
     }
 
-    const data: UserProfileType = {
+    if (verifiedToken.id == req.params.userId) {
+      const data: UserProfileType = {
+        userImageUrl: user.profilePic,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        major: user.majorList,
+        birthday: user.birthday,
+        description: user.description,
+      };
+      res.json(userProfileSelf(data));
+      return;
+    }
+
+    // Not self
+    const data: UserProfileTypeWithID = {
+      _id: user.id,
       userImageUrl: user.profilePic,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -73,14 +90,9 @@ router.route('/:userId').get(async (req, res, next) => {
       major: user.majorList,
       birthday: user.birthday,
       description: user.description,
+      isFriend: true, //! TODO: determine if is friend
+      isBlock: true, //! TODO: determine if is blocked
     };
-
-    if (verifiedToken.id == req.params.userId) {
-      res.json(userProfileSelf(data));
-      return;
-    }
-
-    // Not self
     res.json(userProfileOther(data));
   } catch (err) {
     next(err);

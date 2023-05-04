@@ -8,6 +8,13 @@ export interface UserProfileType {
   description: string;
 }
 
+export interface UserProfileTypeWithID extends UserProfileType {
+  _id: string;
+  isFriend: boolean;
+  isBlock: boolean;
+}
+
+// !profile not found
 export function userProfileNotFound() {
   return {
     content: [
@@ -139,6 +146,7 @@ export function userProfileNotFound() {
   };
 }
 
+// !self
 export function userProfileSelf(user: UserProfileType) {
   return {
     metadata: {
@@ -189,7 +197,7 @@ export function userProfileSelf(user: UserProfileType) {
             textAlignment: 'center',
           },
           {
-            subheading: `${user.major}`, // TODO: possible [] return
+            subheading: `${user.major[0]}`, //TODO: major is array, right now only 1 major max
             marginTop: 'none',
             textColor: '#000000',
             marginLeft: '1rem',
@@ -199,7 +207,7 @@ export function userProfileSelf(user: UserProfileType) {
             textAlignment: 'center',
           },
           {
-            body: `${user.birthday}`,
+            body: `${user.birthday}`, //TODO: reformat?
             marginTop: 'none',
             textColor: '#000000',
             marginLeft: '1rem',
@@ -240,7 +248,7 @@ export function userProfileSelf(user: UserProfileType) {
             borderColor: '#FFFFFF',
             title: 'discover',
             link: {
-              relativePath: '../eccedf5f322d15450c36',
+              relativePath: '../eccedf5f322d15450c36', //TODO: discover endpoint
             },
           },
           {
@@ -249,7 +257,7 @@ export function userProfileSelf(user: UserProfileType) {
             borderColor: '#FFFFFF',
             title: 'profile',
             link: {
-              relativePath: '../733ad84f20dd1aac31da',
+              relativePath: '../733ad84f20dd1aac31da', //TODO: profile endpoint
             },
           },
           {
@@ -258,7 +266,7 @@ export function userProfileSelf(user: UserProfileType) {
             borderColor: '#FFFFFF',
             title: 'Chat',
             link: {
-              relativePath: '../f2e1a58ab1607cd422e1', //TODO
+              relativePath: '../f2e1a58ab1607cd422e1', //TODO: link chat endpoint
             },
           },
         ],
@@ -267,7 +275,8 @@ export function userProfileSelf(user: UserProfileType) {
   };
 }
 
-export function userProfileOther(user: UserProfileType) {
+// !other
+export function userProfileOther(user: UserProfileTypeWithID) {
   return {
     content: [
       {
@@ -300,7 +309,7 @@ export function userProfileOther(user: UserProfileType) {
           },
           {
             image: {
-              url: 'https://thumbs.dreamstime.com/b/male-avatar-icon-flat-style-male-user-icon-cartoon-man-avatar-hipster-vector-stock-91462914.jpg',
+              url: user.userImageUrl,
             },
             imageSize: '78px',
             marginTop: '-3rem',
@@ -311,21 +320,23 @@ export function userProfileOther(user: UserProfileType) {
           {
             marginTop: '.5rem',
             textColor: '#000000',
-            subheading: 'Yilong Wang',
+            subheading: user.lastName + ' ' + user.firstName,
             elementType: 'heroSubheading',
             marginBottom: 'none',
             textAlignment: 'center',
           },
-          {
-            subheading: 'Male',
-            marginTop: 'none',
-            textColor: '#000000',
-            marginLeft: '1rem',
-            elementType: 'heroSubheading',
-            marginRight: '1rem',
-            marginBottom: '0.5rem',
-            textAlignment: 'center',
-          },
+
+          //*TODO: dont include gender when is stranger profile?
+          // {
+          //   subheading: 'Male',
+          //   marginTop: 'none',
+          //   textColor: '#000000',
+          //   marginLeft: '1rem',
+          //   elementType: 'heroSubheading',
+          //   marginRight: '1rem',
+          //   marginBottom: '0.5rem',
+          //   textAlignment: 'center',
+          // },
           {
             subheading: 'Computer Science',
             marginTop: 'none',
@@ -336,18 +347,21 @@ export function userProfileOther(user: UserProfileType) {
             marginBottom: '0.5rem',
             textAlignment: 'center',
           },
+
+          // TODO: dont include birthday when is stranger profile?
+          // {
+          //   body: 'January 11',
+          //   marginTop: 'none',
+          //   textColor: '#000000',
+          //   marginLeft: '1rem',
+          //   elementType: 'heroBody',
+          //   marginRight: '1rem',
+          //   marginBottom: '0.5rem',
+          //   textAlignment: 'center',
+          // },
+
           {
-            body: 'January 11',
-            marginTop: 'none',
-            textColor: '#000000',
-            marginLeft: '1rem',
-            elementType: 'heroBody',
-            marginRight: '1rem',
-            marginBottom: '0.5rem',
-            textAlignment: 'center',
-          },
-          {
-            body: "Hi, it's my second year at Fresno State, hoping to make more friends",
+            body: user.description,
             marginTop: 'none',
             textColor: '#000000',
             marginLeft: '1rem',
@@ -359,13 +373,13 @@ export function userProfileOther(user: UserProfileType) {
           {
             buttons: [
               {
-                title: 'Remove Friend',
+                title: user.isFriend ? 'Add Friend' : 'Remove Friend', // TODO: check
                 events: [
                   {
                     eventName: 'click',
                     targetId: 'button',
                     action: 'ajaxUpdate',
-                    ajaxRelativePath: '../', //path
+                    ajaxRelativePath: '../', // TODO: path to delete
                     requestMethod: 'delete',
                   },
                 ],
@@ -385,13 +399,13 @@ export function userProfileOther(user: UserProfileType) {
           {
             buttons: [
               {
-                title: 'Block User',
+                title: user.isBlock ? 'Unblock' : 'Block User',
                 events: [
                   {
                     eventName: 'click',
                     targetId: 'button',
                     action: 'ajaxUpdate',
-                    ajaxRelativePath: '../', //path
+                    ajaxRelativePath: '../', // TODO: path to block user
                     requestMethod: 'post',
                   },
                 ],
@@ -431,7 +445,7 @@ export function userProfileOther(user: UserProfileType) {
             marginTop: 'responsive',
             title: 'discover',
             link: {
-              relativePath: '../eccedf5f322d15450c36',
+              relativePath: '../eccedf5f322d15450c36', //TODO: link to discover self
             },
           },
           {
@@ -441,7 +455,7 @@ export function userProfileOther(user: UserProfileType) {
             marginTop: 'responsive',
             title: 'profile',
             link: {
-              relativePath: '../733ad84f20dd1aac31da',
+              relativePath: '../733ad84f20dd1aac31da', //TODO: link to profile self
             },
           },
           {
@@ -451,7 +465,7 @@ export function userProfileOther(user: UserProfileType) {
             marginTop: 'responsive',
             title: 'Chat',
             link: {
-              relativePath: '../f2e1a58ab1607cd422e1',
+              relativePath: '../f2e1a58ab1607cd422e1', //TODO: link to chat self
             },
           },
         ],
@@ -462,167 +476,4 @@ export function userProfileOther(user: UserProfileType) {
     },
     contentContainerWidth: 'full',
   };
-  // return {
-  //   content: [
-  //     {
-  //       height: 'fluid',
-  //       content: [
-  //         {
-  //           image: {
-  //             url: 'https://cdn3.freelogovectors.net/wp-content/uploads/2020/04/california-state-university-fresno-logo.png',
-  //           },
-  //           imageSize: '155px',
-  //           marginTop: '1rem',
-  //           elementType: 'heroImage',
-
-  //           horizontalAlignment: 'center',
-  //         },
-  //         {
-  //           image: {
-  //             url: user.userImageUrl,
-  //           },
-  //           imageSize: '78px',
-  //           marginTop: '-5rem',
-  //           elementType: 'heroImage',
-  //           marginBottom: 'xxtight',
-  //           horizontalAlignment: 'center',
-  //         },
-  //         {
-  //           marginTop: '.5rem',
-  //           textColor: '#000000',
-  //           subheading: `${user.firstName} ${user.lastName}`,
-  //           elementType: 'heroSubheading',
-  //           marginBottom: 'none',
-  //           textAlignment: 'center',
-  //           fontFamily: 'cursive',
-  //         },
-  //         {
-  //           subheading: `${user.gender}`,
-  //           marginTop: 'none',
-  //           textColor: '#000000',
-  //           marginLeft: '1rem',
-  //           elementType: 'heroSubheading',
-  //           marginRight: '1rem',
-  //           marginBottom: '0.5rem',
-  //           textAlignment: 'center',
-  //           fontFamily: 'cursive',
-  //         },
-  //         {
-  //           subheading: `${user.major}`, // TODO: possible [] return
-  //           marginTop: 'none',
-  //           textColor: '#000000',
-  //           marginLeft: '1rem',
-  //           elementType: 'heroSubheading',
-  //           marginRight: '1rem',
-  //           marginBottom: '0.5rem',
-  //           textAlignment: 'center',
-  //           fontFamily: 'cursive',
-  //         },
-  //         {
-  //           body: `${user.birthday}`,
-  //           marginTop: 'none',
-  //           textColor: '#000000',
-  //           marginLeft: '1rem',
-  //           elementType: 'heroBody',
-  //           marginRight: '1rem',
-  //           marginBottom: '0.5rem',
-  //           textAlignment: 'center',
-  //           fontFamily: 'cursive',
-  //         },
-  //         {
-  //           body: `${user.description}`,
-  //           marginTop: 'none',
-  //           textColor: '#000000',
-  //           marginLeft: '1rem',
-  //           elementType: 'heroBody',
-  //           marginRight: '1rem',
-  //           marginBottom: '0.5rem',
-  //           textAlignment: 'center',
-  //           fontFamily: 'cursive',
-  //         },
-  //         {
-  //           buttons: [
-  //             {
-  //               title: 'Add/Remove Friend', // TODO
-  //               textColor: '#FFA500',
-  //               borderColor: '#4169E1',
-  //               borderWidth: '2px',
-  //               borderRadius: 'full',
-  //               elementType: 'linkButton',
-  //               backgroundColor: 'white',
-  //             },
-  //           ],
-  //           marginTop: 'none',
-  //           elementType: 'heroButtons',
-  //           marginBottom: '0.5rem',
-  //           horizontalAlignment: 'center',
-  //         },
-  //         {
-  //           buttons: [
-  //             {
-  //               title: 'Block User',
-  //               textColor: '#FFA500',
-  //               borderColor: '#4169E1',
-  //               borderWidth: '2px',
-  //               elementType: 'linkButton',
-  //               backgroundColor: 'white',
-  //               borderRadius: 'full',
-  //             },
-  //           ],
-  //           marginTop: 'none',
-  //           elementType: 'heroButtons',
-  //           marginBottom: '0.5rem',
-  //           horizontalAlignment: 'center',
-  //         },
-  //       ],
-  //       elementType: 'hero',
-  //       backgroundImage: {
-  //         overlayType: 'solid',
-  //         overlayColor: 'white',
-  //       },
-  //       contentContainerWidth: 'narrow',
-  //     },
-  //     {
-  //       borderColor: 'transparent',
-  //       elementType: 'divider',
-  //     },
-  //     {
-  //       elementType: 'buttonGroup',
-  //       fullWidth: true,
-  //       buttons: [
-  //         {
-  //           elementType: 'linkButton',
-  //           size: 'large',
-  //           borderColor: '#FFFFFF',
-  //           title: 'discover',
-  //           link: {
-  //             relativePath: '../eccedf5f322d15450c36', //TODO
-  //           },
-  //         },
-  //         {
-  //           elementType: 'linkButton',
-  //           size: 'large',
-  //           borderColor: '#FFFFFF',
-  //           title: 'profile',
-  //           link: {
-  //             relativePath: '../733ad84f20dd1aac31da',
-  //           },
-  //         },
-  //         {
-  //           elementType: 'linkButton',
-  //           size: 'large',
-  //           borderColor: '#FFFFFF',
-  //           title: 'Chat',
-  //           link: {
-  //             relativePath: '../f2e1a58ab1607cd422e1',
-  //           },
-  //         },
-  //       ],
-  //     },
-  //   ],
-  //   metadata: {
-  //     version: '2.0',
-  //   },
-  //   contentContainerWidth: 'full',
-  // };
 }
