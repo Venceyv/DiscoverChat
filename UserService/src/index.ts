@@ -23,7 +23,6 @@ mongoInit().then(() => {
 
 // IMPORTANT: CONSUMER & REDUCER
 setInterval(async () => {
-  console.log('listening');
   await createConsumer('1291oiewiolkd9283.discover', async (msg: any, channelWrapper: any) => {
     const data = await getUserRMQ(msg);
     await createProducer('209i13q0iewodjwqaikmd.user', data);
