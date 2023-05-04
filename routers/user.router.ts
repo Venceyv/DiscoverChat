@@ -9,7 +9,8 @@
 import { Router } from "express";
 import { verifyUser } from "../services/jwt.service";
 import { getUser } from "../controllers/user.controller";
+import { checkUserExist } from "../middlewares/user.middleware";
 
 const userRouter = Router();
-userRouter.get('/:userId',verifyUser,getUser);
+userRouter.get('/:userId',checkUserExist,verifyUser,getUser);
   export{userRouter};

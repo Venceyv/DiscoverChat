@@ -14,7 +14,6 @@ export interface UserProfileTypeWithID extends UserProfileType {
   isFriend: boolean;
   isBlock: boolean;
 }
-
 // !profile not found
 export function userProfileNotFound() {
   return {
@@ -277,6 +276,176 @@ export function userProfileSelf(user: UserProfileType) {
 }
 
 // !other
+export function userProfileInBlock(user: UserProfileTypeWithID, requesterId: string) {
+  return {
+    content: [
+      {
+        height: "fluid",
+        content: [
+          {
+            elementType: "heroButtons",
+            horizontalAlignment: "left",
+            buttons: [
+              {
+                borderWidth: "2px",
+                borderRadius: "loose",
+                accessoryIcon: "dropleft",
+                elementType: "linkButton",
+                backgroundColor: "#ffffff",
+                link: {
+                  relativePath: "../chatList",
+                },
+              },
+            ],
+          },
+          {
+            image: {
+              url: "https://cdn3.freelogovectors.net/wp-content/uploads/2020/04/california-state-university-fresno-logo.png",
+            },
+            imageSize: "155px",
+            marginTop: "-7rem",
+            elementType: "heroImage",
+            horizontalAlignment: "center",
+          },
+          {
+            image: {
+              url: user.userImageUrl,
+            },
+            imageSize: "78px",
+            marginTop: "-3rem",
+            elementType: "heroImage",
+            marginBottom: "xxtight",
+            horizontalAlignment: "center",
+          },
+          {
+            marginTop: ".5rem",
+            textColor: "#000000",
+            subheading: user.lastName + " " + user.firstName,
+            elementType: "heroSubheading",
+            marginBottom: "none",
+            textAlignment: "center",
+          },
+
+          //*TODO: dont include gender when is stranger profile?
+          // {
+          //   subheading: 'Male',
+          //   marginTop: 'none',
+          //   textColor: '#000000',
+          //   marginLeft: '1rem',
+          //   elementType: 'heroSubheading',
+          //   marginRight: '1rem',
+          //   marginBottom: '0.5rem',
+          //   textAlignment: 'center',
+          // },
+          {
+            subheading: "Computer Science",
+            marginTop: "none",
+            textColor: "#000000",
+            marginLeft: "1rem",
+            elementType: "heroSubheading",
+            marginRight: "1rem",
+            marginBottom: "0.5rem",
+            textAlignment: "center",
+          },
+
+          // TODO: dont include birthday when is stranger profile?
+          // {
+          //   body: 'January 11',
+          //   marginTop: 'none',
+          //   textColor: '#000000',
+          //   marginLeft: '1rem',
+          //   elementType: 'heroBody',
+          //   marginRight: '1rem',
+          //   marginBottom: '0.5rem',
+          //   textAlignment: 'center',
+          // },
+
+          {
+            body: user.description,
+            marginTop: "none",
+            textColor: "#000000",
+            marginLeft: "1rem",
+            elementType: "heroBody",
+            marginRight: "1rem",
+            marginBottom: "0.5rem",
+            textAlignment: "center",
+          },
+          {
+            buttons: [
+              {
+                title: "Unblock",
+                link: {
+                  relativePath:  `../blockList/unBlock/${user._id}`,
+                },
+                textColor: "#FFA500",
+                borderColor: "#4169E1",
+                borderWidth: "2px",
+                elementType: "linkButton",
+                backgroundColor: "white",
+                borderRadius: "full",
+              },
+            ],
+            marginTop: "none",
+            elementType: "heroButtons",
+            marginBottom: "0.5rem",
+            horizontalAlignment: "center",
+          },
+        ],
+        elementType: "hero",
+        backgroundImage: {
+          overlayType: "solid",
+          overlayColor: "white",
+        },
+        contentContainerWidth: "narrow",
+      },
+      {
+        borderColor: "transparent",
+        elementType: "divider",
+      },
+      {
+        elementType: "buttonGroup",
+        fullWidth: true,
+        buttons: [
+          {
+            elementType: "linkButton",
+            size: "large",
+            borderColor: "#FFFFFF",
+            marginTop: "responsive",
+            title: "discover",
+            link: {
+              relativePath: "../discover/discoverPage", //TODO: link to discover self
+            },
+          },
+          {
+            elementType: "linkButton",
+            size: "large",
+            borderColor: "#FFFFFF",
+            marginTop: "responsive",
+            title: "profile",
+            link: {
+              relativePath: `../user/${requesterId}`, //TODO: link to profile self
+            },
+          },
+          {
+            elementType: "linkButton",
+            size: "large",
+            borderColor: "#FFFFFF",
+            marginTop: "responsive",
+            title: "Chat",
+            link: {
+              relativePath: "../chatList", //TODO: link to chat self
+            },
+          },
+        ],
+      },
+    ],
+    metadata: {
+      version: "2.0",
+    },
+    contentContainerWidth: "full",
+  };
+}
+
 export function userProfileOther(user: UserProfileTypeWithID, requesterId: string) {
   return {
     content: [
@@ -395,15 +564,9 @@ export function userProfileOther(user: UserProfileTypeWithID, requesterId: strin
             buttons: [
               {
                 title: user.isBlock ? "Unblock" : "Block User",
-                events: [
-                  {
-                    eventName: "click",
-                    targetId: `${user._id}`,
-                    action: "ajaxUpdate",
-                    ajaxRelativePath: "../", //!TODO: path to block user
-                    requestMethod: "post",
-                  },
-                ],
+                link: {
+                  relativePath: user.isBlock ? `../blockList/unBlock/${user._id}` : `../blockList/block/${user._id}`,
+                },
                 textColor: "#FFA500",
                 borderColor: "#4169E1",
                 borderWidth: "2px",

@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-11 00:50:30
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-04 10:45:45
+ * @LastEditTime: 2023-05-04 12:36:07
  * @FilePath: \discoveryChat\services\discover.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -17,6 +17,7 @@ import { ToolBar } from "../interfaces/toolBar.interface";
 import { isFriends, retriveFriendList } from "./friendList.service";
 import { Form } from "../interfaces/loginForm.interface";
 import { List } from "../interfaces/list.interface";
+import { inList } from "./blockList.service";
 export const getMightBeFriendList = async (
   requester: string,
   friendList: Array<string>
@@ -153,7 +154,36 @@ export const getDiscoverUserContentJson = async (
     userData.map(async (user) => {
       let userSearchContent: DiscoverUserContentJson;
       if (user._id != requesterId) {
-        const isFriend = await isFriends(requesterId, user._id as string);
+        const inBlock = await inList(requesterId,user._id as string);
+        if(inBlock){
+          userSearchContent = {
+            id:`${user._id}`,
+            title: user.firstName + " " + user.lastName,
+            link: {
+              relativePath: `../user/${user._id}`,
+            },
+            description: user.majorList[0],
+            image: {
+              url: user.profilePic,
+              alt: `Photo of ${user.firstName + " " + user.lastName}`,
+            },
+            accessoryButton: {
+              title:  "unBlock",
+              events: [
+                {
+                  eventName: "click",
+                  targetId: `${user._id}`,
+                  action: "ajaxUpdate",
+                  ajaxRelativePath: `../blockList/${user._id}`,
+                  requestMethod:"delete",
+                },
+              ],
+              textColor: "theme:focal_link_color",
+            },
+          };
+        }
+        else{
+          const isFriend = await isFriends(requesterId, user._id as string);
         userSearchContent = {
           id:`${user._id}`,
           title: user.firstName + " " + user.lastName,
@@ -179,6 +209,7 @@ export const getDiscoverUserContentJson = async (
             textColor: "theme:focal_link_color",
           },
         };
+        }
       } else {
         userSearchContent = {
           title: user.firstName + " " + user.lastName,

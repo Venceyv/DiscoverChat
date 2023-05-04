@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-06 17:52:52
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-04 10:13:27
+ * @LastEditTime: 2023-05-04 11:28:06
  * @FilePath: \discoveryChat(V1)\controllers\chatRoom.controller.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -74,9 +74,11 @@ export const sentToRoom = async (req: Request, res: Response) => {
     const userId = req.params.userId;
     const requesterId = req.body.user._id;
     const roomId = makeKey(requesterId, userId);
+    const friendRoomId = makeKey(userId, requesterId);
     const msg = roomMessageSchema.parse({ content: req.body.message, sender: requesterId, room: roomId });
-    const dbBack = await new RoomMessage(msg).save();
-    await Promise.all([saveMessage(roomId, dbBack), saveMessage(userId + ":" + requesterId, dbBack)]);
+    const friendMsg = roomMessageSchema.parse({ content: req.body.message, sender: requesterId, room: friendRoomId });
+    const [dbBack, frindDbBack] = await Promise.all([new RoomMessage(msg).save(), new RoomMessage(friendMsg).save()]);
+    await Promise.all([saveMessage(roomId, dbBack), saveMessage(friendRoomId, frindDbBack)]);
     return res.status(200).json(["message sent!"]);
   } catch (error) {
     roomLogger.error(error);
@@ -101,13 +103,15 @@ export const deleteRoom = async (req: Request, res: Response) => {
     const requesterId = req.body.user._id;
     const userId = req.params.userId;
     const roomId = makeKey(requesterId, userId);
+    const friendRoomId = makeKey(userId, requesterId);
     await Promise.all([
       deleteFromFriendList(requesterId, userId),
       deleteFromFriendList(userId, requesterId),
       redisRoom.del(requesterId + ":" + userId),
       redisRoom.del(userId + ":" + requesterId),
+      RoomMessage.deleteMany({ room: roomId }),
+      RoomMessage.deleteMany({ room: friendRoomId }),
     ]);
-    await RoomMessage.deleteMany({ room: roomId });
     const friendStatus = await getCurrentFriendStatus(userId, requesterId);
     return res.status(200).json(friendStatus);
   } catch (error) {
@@ -144,7 +148,7 @@ export const getDeleteRoom = async (req: Request, res: Response) => {
       isFriend: false, //! TODO: determine if is friend
       isBlock: false, //! TODO: determine if is blocked
     };
-    return res.status(200).json(userProfileOther(data,requesterId));
+    return res.status(200).json(userProfileOther(data, requesterId));
   } catch (error) {
     roomLogger.error(error);
     res.json({ error: error });
@@ -177,7 +181,7 @@ export const getNewRoom = async (req: Request, res: Response) => {
       isFriend: true, //! TODO: determine if is friend
       isBlock: false, //! TODO: determine if is blocked
     };
-    return res.status(200).json(userProfileOther(data,user1));
+    return res.status(200).json(userProfileOther(data, user1));
   } catch (error) {
     errorHandler(error, req, res, null);
   }

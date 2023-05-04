@@ -10,13 +10,15 @@ import {Router} from "express";
 import {  deleteRoom, getDeleteRoom, getNewRoom, getRoomMessage, getRoomPage, newRoom, sentToRoom } from "../controllers/chatRoom.controller";
 import {  checkIfFriends } from "../middlewares/room.middleware";
 import { verifyUser } from "../services/jwt.service";
+import { checkUserExist } from "../middlewares/user.middleware";
+import { checkIfInBlockList } from "../middlewares/blockList.middleware";
 const chatRoomRouter = Router();
 
-chatRoomRouter.get('/:userId',verifyUser,checkIfFriends,getRoomPage);
-chatRoomRouter.get('/add/:userId',verifyUser,getNewRoom);
-chatRoomRouter.get('/delete/:userId',verifyUser,getDeleteRoom);
-chatRoomRouter.get('/message/:userId',verifyUser,checkIfFriends,getRoomMessage);
-chatRoomRouter.post('/:userId',verifyUser,newRoom);
-chatRoomRouter.post('/newMessage/:userId',verifyUser,checkIfFriends,sentToRoom);
-chatRoomRouter.delete('/:userId',verifyUser,checkIfFriends,deleteRoom);
+chatRoomRouter.get('/:userId',verifyUser,checkUserExist,checkIfInBlockList,checkIfFriends,getRoomPage);
+chatRoomRouter.get('/add/:userId',verifyUser,checkUserExist,checkIfInBlockList,getNewRoom);
+chatRoomRouter.get('/delete/:userId',verifyUser,checkUserExist,getDeleteRoom);
+chatRoomRouter.get('/message/:userId',verifyUser,checkUserExist,checkIfInBlockList,checkIfFriends,getRoomMessage);
+chatRoomRouter.post('/:userId',verifyUser,checkUserExist,checkIfInBlockList,newRoom);
+chatRoomRouter.post('/newMessage/:userId',verifyUser,checkUserExist,checkIfInBlockList,checkIfFriends,sentToRoom);
+chatRoomRouter.delete('/:userId',verifyUser,checkUserExist,checkIfFriends,deleteRoom);
 export {chatRoomRouter}

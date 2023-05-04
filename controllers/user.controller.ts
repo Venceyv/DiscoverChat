@@ -1,17 +1,13 @@
-import { User } from "../models/index.model";
-import { UserProfileType, UserProfileTypeWithID, userProfileNotFound, userProfileOther, userProfileSelf } from "../services/profile";
+import { UserProfileType, UserProfileTypeWithID, userProfileInBlock, userProfileNotFound, userProfileOther, userProfileSelf } from "../services/profile";
 import { isFriends } from "../services/friendList.service";
 import { NextFunction, Request, Response } from "express";
+import { inList } from "../services/blockList.service";
 
 export const getUser =async (req:Request, res:Response, next:NextFunction) => {
     try {
         const userId = req.params.userId;
         const requesterId = req.body.user._id;
-      const user = await User.findById(userId);
-      if (!user) {
-        res.json(userProfileNotFound());
-        return;
-      }
+      const user = req.body.paramUser;
       if (requesterId == req.params.userId) {
         const data: UserProfileType = {
             _id:user._id.toString(),
@@ -27,7 +23,12 @@ export const getUser =async (req:Request, res:Response, next:NextFunction) => {
         return;
       }
       // Not self
-      const isFriend = await isFriends(requesterId,userId);
+      const [isFriend,isBlock] = await Promise.all(
+        [
+            isFriends(requesterId,userId),
+            inList(requesterId,userId)
+        ]
+      );
       const data: UserProfileTypeWithID = {
         _id: user.id,
         userImageUrl: user.profilePic,
@@ -38,9 +39,10 @@ export const getUser =async (req:Request, res:Response, next:NextFunction) => {
         birthday: user.birthday,
         description: user.description,
         isFriend: isFriend as boolean, //! TODO: determine if is friend
-        isBlock: false, //! TODO: determine if is blocked
+        isBlock: isBlock as boolean, //! TODO: determine if is blocked
       };
-      res.status(200).json(userProfileOther(data,requesterId));
+      const response = isBlock?userProfileInBlock(data,requesterId):userProfileOther(data,requesterId);
+      res.status(200).json(response);
     } catch (err) {
       next(err);
     }
