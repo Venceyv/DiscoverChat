@@ -4,11 +4,30 @@ import multerFileProcess from '../../middleware/fileProcess.middleware';
 import { APIError } from '../../middleware/error.middleware';
 import User from '../../model/user.model';
 import { userSchema } from '../../validator/user.validator';
+import {
+  UserProfileType,
+  UserProfileTypeWithID,
+  userProfileNotFound,
+  userProfileOther,
+  userProfileSelf,
+} from '../../modo-assets/profile';
+import jwtService from '../../service/jwt.service';
+import { JwtPayload } from 'jsonwebtoken';
 const router = express.Router();
 
 router.route('/').post(async (req, res, next) => {
   try {
-    //validate req body
+    const verifiedToken: JwtPayload = (await jwtService.verifyToken(
+      req.cookies.DC_token
+    )) as JwtPayload;
+
+    const isExistUser = await User.findOne({ _id: verifiedToken._id }).exec();
+
+    if (isExistUser) {
+      res.status(400).json({ message: 'User already exists.' });
+      return;
+    }
+
     const requestUser = userSchema.parse(req.body);
     const user = await User.create(requestUser);
     res.status(201).json({ message: 'User created successfully.', data: user });
@@ -17,6 +36,7 @@ router.route('/').post(async (req, res, next) => {
   }
 });
 
+// NOTE: gservice upload
 router
   .route('/profile')
   .post(multerFileProcess.fileProcess.single('discoverChatAsset'), async (req, res, next) => {
@@ -33,14 +53,50 @@ router
     }
   });
 
-router.route('/:userId').get(async (req, res) => {
-  //check auth if is user <-> token      <- middleware
-  // if true
-  // -> get self
-  // if false
-  // -> get userId
+// get user profile
+router.route('/:userId').get(async (req, res, next) => {
+  try {
+    const token = req.cookies.DC_token;
+    const verifiedToken: JwtPayload = (await jwtService.verifyToken(token)) as JwtPayload;
 
-  res.send('Hi user 🤪');
+    const user = await User.findById(verifiedToken.id);
+
+    if (!user) {
+      res.json(userProfileNotFound());
+      return;
+    }
+
+    if (verifiedToken.id == req.params.userId) {
+      const data: UserProfileType = {
+        userImageUrl: user.profilePic,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        major: user.majorList,
+        birthday: user.birthday,
+        description: user.description,
+      };
+      res.json(userProfileSelf(data));
+      return;
+    }
+
+    // Not self
+    const data: UserProfileTypeWithID = {
+      _id: user.id,
+      userImageUrl: user.profilePic,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      gender: user.gender,
+      major: user.majorList,
+      birthday: user.birthday,
+      description: user.description,
+      isFriend: true, //! TODO: determine if is friend
+      isBlock: true, //! TODO: determine if is blocked
+    };
+    res.json(userProfileOther(data));
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

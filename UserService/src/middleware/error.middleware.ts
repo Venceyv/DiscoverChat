@@ -14,8 +14,6 @@ export class APIError extends Error {
 }
 
 const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
-  logger.error(err);
-
   // Custom api error
   if (err instanceof APIError) {
     const response = {
@@ -28,11 +26,13 @@ const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunct
     return;
   }
 
+  // Zod validation error
   if (err instanceof ZodError) {
     res.status(400).json(err.issues);
     return;
   }
 
+  logger.error(err);
   res.status(500).send({ error: 'Internal Server Error.' });
 };
 
