@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-06 17:52:52
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-04 11:28:06
+ * @LastEditTime: 2023-05-04 13:58:54
  * @FilePath: \discoveryChat(V1)\controllers\chatRoom.controller.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -20,6 +20,7 @@ import { UserResourceRequestType } from "../interfaces/request.interface";
 import { getUserData } from "../services/chatMq.service";
 import { user } from "../interfaces/data.Interface";
 import { UserProfileTypeWithID, userProfileNotFound, userProfileOther } from "../services/profile";
+import { UserMap } from "../services/userMap";
 
 export const newRoom = async (req: Request, res: Response) => {
   try {
@@ -75,8 +76,13 @@ export const sentToRoom = async (req: Request, res: Response) => {
     const requesterId = req.body.user._id;
     const roomId = makeKey(requesterId, userId);
     const friendRoomId = makeKey(userId, requesterId);
-    const msg = roomMessageSchema.parse({ content: req.body.message, sender: requesterId, room: roomId });
-    const friendMsg = roomMessageSchema.parse({ content: req.body.message, sender: requesterId, room: friendRoomId });
+    const sender = req.query.sender;
+    let Msender;
+    if(sender) {
+      Msender = UserMap.get(sender as string);
+    }
+    const msg = roomMessageSchema.parse({ content: req.body.message, sender: sender?Msender:requesterId, room: roomId });
+    const friendMsg = roomMessageSchema.parse({ content: req.body.message, sender: sender?Msender:requesterId, room: friendRoomId });
     const [dbBack, frindDbBack] = await Promise.all([new RoomMessage(msg).save(), new RoomMessage(friendMsg).save()]);
     await Promise.all([saveMessage(roomId, dbBack), saveMessage(friendRoomId, frindDbBack)]);
     return res.status(200).json(["message sent!"]);

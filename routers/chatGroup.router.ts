@@ -18,6 +18,7 @@ import {
   removeFromGroup,
   sentToGroup,
   getGroupMemberPage,
+  getLeaveGroup,
 } from "../controllers/chatGroup.controller";
 import { checkGroupExist, checkIfInTheGroup } from "../middlewares/group.middleware";
 import { verifyUser } from "../services/jwt.service";
@@ -30,6 +31,7 @@ chatGroupRouter.get('/makeGroupPage',verifyUser,getMakeGroupPage);
 chatGroupRouter.get("/:groupId", verifyUser, checkGroupExist, getGroupPage);
 chatGroupRouter.get("/message/:groupId", verifyUser, checkGroupExist, checkIfInTheGroup, getGroupMessage);
 chatGroupRouter.get("/memberPage/:groupId", verifyUser, checkGroupExist, checkIfInTheGroup, getGroupMemberPage);
+chatGroupRouter.get("/leaveGroup/:groupId", verifyUser, checkGroupExist, checkIfInTheGroup, getLeaveGroup);
 chatGroupRouter.post("/:userId", verifyUser,checkUserExist,checkIfInBlockList, newGroup);
 chatGroupRouter.post("/newMember/:groupId/:userId", verifyUser, checkGroupExist,checkIfInBlockList, inviteToGroup); 
 chatGroupRouter.post("/newMessage/:groupId", verifyUser, checkGroupExist, checkIfInTheGroup, sentToGroup);

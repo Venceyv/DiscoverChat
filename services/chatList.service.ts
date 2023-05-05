@@ -1,12 +1,8 @@
 import { globalLogger } from "../configs/logger.config";
 import { redisGroup, redisRoom } from "../configs/redis.config";
 import { Group, GroupMember } from "../models/index.model";
-import { createConsumer, getUserData } from "../services/chatMq.service";
+import {  getUserData } from "../services/chatMq.service";
 import { makeKey } from "../services/userKey.service";
-import vars from "../configs/vars.config";
-import { retrieveGlobalData, saveGlobalData } from "../services/globalData.service";
-import { UserResponseType } from "../interfaces/response.interface";
-import { sendRequest } from "../services/request.service";
 import { UserResourceRequestType } from "../interfaces/request.interface";
 import { user, DiaLogue, roomMessage, groupMessage } from "../interfaces/data.Interface";
 import { retriveFriendList } from "../services/friendList.service";
@@ -79,7 +75,10 @@ export const getUserChatList = async (
         chats = chats.sort((a, b) => b.timeStamp!.getTime() - a.timeStamp!.getTime());
         break;
       default:
-        chats = chats.filter((e) => e.name.includes(keyword!));
+        chats = chats.filter((e) => {
+          const chatName = e.name.toLowerCase();
+          return chatName.includes(keyword!.toLowerCase());
+        });
         break;
     }
     const chatListJson = getChatListJson(chats);

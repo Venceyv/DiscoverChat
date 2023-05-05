@@ -2,7 +2,7 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-05-03 03:12:28
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
- * @LastEditTime: 2023-05-03 23:27:43
+ * @LastEditTime: 2023-05-04 16:55:06
  * @FilePath: \discoveryChat(V1)\controllers\chatGroup.controller.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -33,6 +33,9 @@ import { getUserData } from "../services/chatMq.service";
 import { GroupMemberPageJson } from "../interfaces/group.interface";
 import { stringOperator } from "../services/stringOperator";
 import { DiscoverPageJson } from "../interfaces/discover.interface";
+import { getChatListPageJson, getUserChatList } from "../services/chatList.service";
+import { ChatListContent } from "../interfaces/chat.interfaces";
+import { UserMap } from "../services/userMap";
 
 export const getMakeGroupPage = async (req: Request, res: Response) => {
   try {    
@@ -159,8 +162,13 @@ export const sentToGroup = async (req: Request, res: Response) => {
     const userId = req.body.user._id;
     const date = new Date();
     const timeNow = date.toISOString();
-    const msg = groupMessageSchema.parse({ content: req.body.message, sender: userId, group: groupId });
-    const [message, group] = await Promise.all([
+    const sender = req.query.sender;
+    let Msender;
+    if(sender) {
+      Msender = UserMap.get(sender as string);
+    }
+    const msg = groupMessageSchema.parse({ content: req.body.message, sender: sender?Msender:userId, group: groupId });
+    const [message] = await Promise.all([
       new GroupMessage(msg).save(),
       Group.findById(groupId),
       Group.findByIdAndUpdate(groupId, { lastActivity: timeNow }),
@@ -265,7 +273,36 @@ export const leaveGroup = async (req: Request, res: Response) => {
     errorHandler(error, req, res, null);
   }
 };
-
+export const getLeaveGroup = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.groupId;
+    const userId = req.body.user._id.toString();
+    await GroupMember.findOneAndDelete({ user: userId, group: groupId });
+    const member = (await GroupMember.find({group:groupId}).lean());
+    if(member.length==0) await Group.findByIdAndDelete(groupId);
+    const requester = req.body.user;
+    const query = req.body.q;
+    const friendListAddGroupApi = `../group/makeGroupPage`;
+    const getDiscoverPageApi = `../discover/discoverPage`;
+    const getSelfProfileApi = `../user/${requester._id}`;
+    const getChatListPageApi = `../chatList`;
+    let chats;
+    if(query)
+       chats = (await getUserChatList(requester._id, "bySearch", query as string));
+    else chats = (await getUserChatList(requester._id, "byTime"));
+    if(chats == undefined) chats= [] as ChatListContent[];
+    const chatlistPageJson = getChatListPageJson(
+      friendListAddGroupApi,
+      chats as ChatListContent[],
+      getDiscoverPageApi,
+      getSelfProfileApi,
+      getChatListPageApi
+    );
+    res.status(200).json(chatlistPageJson);
+  } catch (error) {
+    errorHandler(error, req, res, null);
+  }
+};
 export const getGroupMemberPage = async (req: Request, res: Response) => {
   try {
     const groupId = req.params.groupId;

@@ -207,16 +207,6 @@ export function userProfileSelf(user: UserProfileType) {
             textAlignment: "center",
           },
           {
-            body: `${user.birthday}`, //TODO: reformat?
-            marginTop: "none",
-            textColor: "#000000",
-            marginLeft: "1rem",
-            elementType: "heroBody",
-            marginRight: "1rem",
-            marginBottom: "0.5rem",
-            textAlignment: "center",
-          },
-          {
             body: `${user.description}`,
             marginTop: "none",
             textColor: "#000000",
