@@ -12,7 +12,10 @@ const { Schema } = mongoose;
 const groupMessageSchema = new Schema({
   content: {
     type: String,
+<<<<<<< HEAD
     required:true
+=======
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
   },
   timeStamp:{
     type:Date,

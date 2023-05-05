@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-10 22:44:44
@@ -43,3 +44,20 @@ export const getDiscoverPage = async (req: Request, res: Response) => {
     discoverLogger.error(error);
   }
 };
+=======
+import { discoverLogger } from "../configs/logger.config";
+import { redisFriendList } from "../configs/redis.config";
+import { Request,Response } from "express";
+export const getRecommand = async (req: Request, res: Response) => {
+  try {
+    const userId = req.body.requester;
+    const [friendList] = await Promise.all([redisFriendList.lrange(userId, 0, -1)]);
+
+    return res.status(200).json({ friendList });
+  } catch (error) {
+    discoverLogger.error(error);
+    console.log(error);
+  }
+};
+//emmmmm....
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7

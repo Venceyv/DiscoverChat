@@ -2,7 +2,11 @@
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-12 23:30:11
  * @LastEditors: 2FLing 349332929yaofu@gmail.com
+<<<<<<< HEAD
  * @LastEditTime: 2023-04-23 20:16:43
+=======
+ * @LastEditTime: 2023-04-13 06:31:35
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
  * @FilePath: \discoveryChat\middlewares\error.middleware.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -30,7 +34,11 @@ export class ErrorInfo{
   }
 }
 
+<<<<<<< HEAD
 export const errorHandler = (err: APIError|unknown, req: Request, res: Response, next: NextFunction|null = null) => {
+=======
+export const errorHandler = (err: APIError|unknown, req: Request, res: Response, next: NextFunction) => {
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
   // Custom api error
   if (err instanceof APIError) {
     const relatedId = req.params.roomId?req.params.roomId:req.params.groupId;
@@ -50,13 +58,26 @@ export const errorHandler = (err: APIError|unknown, req: Request, res: Response,
       message: err.message,
       statusCode: err.statusCode,
     };
+<<<<<<< HEAD
     return res.status(err.statusCode).send(response);
+=======
+    res.status(err.statusCode).send(response);
+    return;
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
   }
   // Zod validation error
   if (err instanceof ZodError) {
     globalLogger.error(err.issues);
+<<<<<<< HEAD
     return res.status(400).json(err.issues);
   }
   globalLogger.error(err);
   return res.status(500).send({ error: 'Internal Server Error.' });
+=======
+    res.status(400).json(err.issues);
+    return;
+  }
+  globalLogger.error('Internal Server Error.');
+  res.status(500).send({ error: 'Internal Server Error.' });
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
 };

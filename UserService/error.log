@@ -1,0 +1,17 @@
+{"level":"error"}
+{"level":"error","name":"Error","statusCode":404}
+{"code":"EPIPE","errno":-4047,"level":"error","syscall":"write"}
+{"level":"error","name":"Error","statusCode":400}
+{"level":"error","name":"Error","statusCode":400}
+{"code":11000,"index":0,"keyPattern":{"username":1},"keyValue":{"username":null},"level":"error"}
+{"code":11000,"index":0,"keyPattern":{"username":1},"keyValue":{"username":null},"level":"error"}
+{"code":11000,"index":0,"keyPattern":{"username":1},"keyValue":{"username":null},"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"classId":50,"code":406,"level":"error","methodId":10}
+{"classId":50,"code":406,"level":"error","methodId":10}
+{"classId":50,"code":406,"level":"error","methodId":10}

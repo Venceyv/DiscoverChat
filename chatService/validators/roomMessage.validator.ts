@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*
  * @Author: 2FLing 349332929yaofu@gmail.com
  * @Date: 2023-04-13 01:37:03
@@ -6,10 +7,16 @@
  * @FilePath: \discoveryChat\validators\roomMessage.validator.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
+=======
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
 import { z } from "zod";
 
 export const roomMessageSchema = z.object({
     content:z.string().min(1),
     sender:z.string(),
     room:z.string(),
+<<<<<<< HEAD
 }).strict();
+=======
+}).strict();
+>>>>>>> d8e83b038d42dd6c4c51a9c49b48ca21b3e566e7
